@@ -1,21 +1,14 @@
+#include "cadastro.h"
+#include "../lib/pessoas.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 #include <sys/stat.h>
-#include <sys/types.h>
-#include "src/lib/pessoas.h"
+#include <ctype.h>
+#include "../lib/cores.h"
+#include <unistd.h>
 
-#define RED "\033[1;31m"
-#define RESET "\033[0m"
-
-typedef struct TreeNode {
-    Pessoa pessoa;
-    struct TreeNode *esquerda;
-    struct TreeNode *direita;
-} TreeNode;
-
-TreeNode* inserirNaArvore(TreeNode *raiz, Pessoa p) {
+static TreeNode* inserirNaArvore(TreeNode *raiz, Pessoa p) {
     if (!raiz) {
         TreeNode *novo = malloc(sizeof(TreeNode));
         novo->pessoa = p;
@@ -30,7 +23,7 @@ TreeNode* inserirNaArvore(TreeNode *raiz, Pessoa p) {
     return raiz;
 }
 
-void salvarEmOrdem(TreeNode *raiz, FILE *arquivo) {
+static void salvarEmOrdem(TreeNode *raiz, FILE *arquivo) {
     if (!raiz) return;
     salvarEmOrdem(raiz->esquerda, arquivo);
     fprintf(arquivo, "%s,%s,%s,%s\n",
@@ -42,23 +35,14 @@ void salvarEmOrdem(TreeNode *raiz, FILE *arquivo) {
     salvarEmOrdem(raiz->direita, arquivo);
 }
 
-void liberarArvore(TreeNode *raiz) {
+static void liberarArvore(TreeNode *raiz) {
     if (!raiz) return;
     liberarArvore(raiz->esquerda);
     liberarArvore(raiz->direita);
     free(raiz);
 }
 
-int validarDataNascimento(const char *data) {
-    if (strlen(data) != 10) return 0;
-    if (data[2] != '/' || data[5] != '/') return 0;
-    for (int i = 0; i < 10; i++) {
-        if (i != 2 && i != 5 && !isdigit(data[i])) return 0;
-    }
-    return 1;
-}
-
-int main() {
+void executar_cadastro() {
     TreeNode *raiz = NULL;
     char opcao;
 
@@ -82,7 +66,7 @@ int main() {
                 limparBufferEntrada();
             }
         } while (!validarDataNascimento(p.dataNascimento));
-
+        
         limparBufferEntrada();
 
         char sexoEntrada[10];
@@ -97,12 +81,10 @@ int main() {
         } while (sexoOpcao != 1 && sexoOpcao != 2);
 
         strcpy(p.sexo, (sexoOpcao == 1) ? "Masculino" : "Feminino");
-
         p.maiorIdade = (calcularIdade(p.dataNascimento) >= 18);
-
         raiz = inserirNaArvore(raiz, p);
 
-        printf("Continuar? (s/n): ");
+        printf("\nContinuar? (s/n): ");
         opcao = tolower(getchar());
         limparBufferEntrada();
     } while (opcao == 's');
@@ -112,11 +94,12 @@ int main() {
         fprintf(arquivo, "Nome,Data de Nascimento,Sexo,Maior de Idade\n");
         salvarEmOrdem(raiz, arquivo);
         fclose(arquivo);
-        printf("\nArquivo 'data/lista.csv' gerado!\n");
+        printf(GREEN "\nArquivo 'data/lista.csv' gerado!\n" RESET);
     } else {
-        printf("Erro ao salvar arquivo!\n");
+        printf(RED "Erro ao salvar arquivo!\n" RESET);
     }
 
+    sleep(3);
+
     liberarArvore(raiz);
-    return 0;
 }

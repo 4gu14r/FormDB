@@ -10,9 +10,9 @@ typedef struct {
     bool maiorIdade;
 } Pessoa;
 
-
-// Funções compartilhadas
+// Funções básicas
 int calcularIdade(const char *dataNascimento);
 void limparBufferEntrada();
+int validarDataNascimento(const char *data);
 
 #endif
