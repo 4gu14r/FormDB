@@ -2,7 +2,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include "src/lib/pessoas.h"
+
+#define RED "\033[1;31m"
+#define RESET "\033[0m"
 
 typedef struct TreeNode {
     Pessoa pessoa;
@@ -44,9 +49,23 @@ void liberarArvore(TreeNode *raiz) {
     free(raiz);
 }
 
+int validarDataNascimento(const char *data) {
+    if (strlen(data) != 10) return 0;
+    if (data[2] != '/' || data[5] != '/') return 0;
+    for (int i = 0; i < 10; i++) {
+        if (i != 2 && i != 5 && !isdigit(data[i])) return 0;
+    }
+    return 1;
+}
+
 int main() {
     TreeNode *raiz = NULL;
     char opcao;
+
+    struct stat st = {0};
+    if (stat("data", &st) == -1) {
+        mkdir("data", 0700);
+    }
 
     do {
         Pessoa p;
@@ -54,15 +73,27 @@ int main() {
         fgets(p.nome, sizeof(p.nome), stdin);
         p.nome[strcspn(p.nome, "\n")] = '\0';
 
-        printf("Data de Nascimento (dd/mm/aaaa): ");
-        fgets(p.dataNascimento, sizeof(p.dataNascimento), stdin);
-        p.dataNascimento[strcspn(p.dataNascimento, "\n")] = '\0';
+        do {
+            printf("Data de Nascimento (dd/mm/aaaa): ");
+            fgets(p.dataNascimento, sizeof(p.dataNascimento), stdin);
+            p.dataNascimento[strcspn(p.dataNascimento, "\n")] = '\0';
+            if (!validarDataNascimento(p.dataNascimento)) {
+                printf(RED "Formato inválido! Tente novamente.\n" RESET);
+                limparBufferEntrada();
+            }
+        } while (!validarDataNascimento(p.dataNascimento));
 
+        limparBufferEntrada();
+
+        char sexoEntrada[10];
         int sexoOpcao;
         do {
             printf("Sexo (1 - Masculino, 2 - Feminino): ");
-            scanf("%d", &sexoOpcao);
-            limparBufferEntrada();
+            fgets(sexoEntrada, sizeof(sexoEntrada), stdin);
+            if (sscanf(sexoEntrada, "%d", &sexoOpcao) != 1 || (sexoOpcao != 1 && sexoOpcao != 2)) {
+                printf(RED "Opção inválida! Tente novamente.\n" RESET);
+                sexoOpcao = 0;
+            }
         } while (sexoOpcao != 1 && sexoOpcao != 2);
 
         strcpy(p.sexo, (sexoOpcao == 1) ? "Masculino" : "Feminino");
@@ -76,12 +107,12 @@ int main() {
         limparBufferEntrada();
     } while (opcao == 's');
 
-    FILE *arquivo = fopen("lista.csv", "w");
+    FILE *arquivo = fopen("data/lista.csv", "w");
     if (arquivo) {
         fprintf(arquivo, "Nome,Data de Nascimento,Sexo,Maior de Idade\n");
         salvarEmOrdem(raiz, arquivo);
         fclose(arquivo);
-        printf("\nArquivo 'lista.csv' gerado!\n");
+        printf("\nArquivo 'data/lista.csv' gerado!\n");
     } else {
         printf("Erro ao salvar arquivo!\n");
     }
