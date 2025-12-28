@@ -15,19 +15,21 @@ NC = \033[0m # No Color
 CORE_SRC = $(SRC_DIR)/core/field.c $(SRC_DIR)/core/form.c $(SRC_DIR)/core/record.c
 UI_SRC = $(SRC_DIR)/ui/form_builder.c $(SRC_DIR)/ui/data_entry.c $(SRC_DIR)/ui/form_browser.c
 STORAGE_SRC = $(SRC_DIR)/storage/csv_handler.c
+SEARCH_SRC = $(SRC_DIR)/search/search.c
 UTILS_SRC = $(SRC_DIR)/utils/string_utils.c $(SRC_DIR)/utils/input_utils.c
 MAIN_SRC = $(SRC_DIR)/main.c
 
-ALL_SRC = $(CORE_SRC) $(UI_SRC) $(STORAGE_SRC) $(UTILS_SRC) $(MAIN_SRC)
+ALL_SRC = $(CORE_SRC) $(UI_SRC) $(STORAGE_SRC) $(SEARCH_SRC) $(UTILS_SRC) $(MAIN_SRC)
 
 # Arquivos objeto
 CORE_OBJ = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(CORE_SRC))
 UI_OBJ = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(UI_SRC))
 STORAGE_OBJ = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(STORAGE_SRC))
+SEARCH_OBJ = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SEARCH_SRC))
 UTILS_OBJ = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(UTILS_SRC))
 MAIN_OBJ = $(OBJ_DIR)/main.o
 
-ALL_OBJ = $(CORE_OBJ) $(UI_OBJ) $(STORAGE_OBJ) $(UTILS_OBJ) $(MAIN_OBJ)
+ALL_OBJ = $(CORE_OBJ) $(UI_OBJ) $(STORAGE_OBJ) $(SEARCH_OBJ) $(UTILS_OBJ) $(MAIN_OBJ)
 
 # Executável
 TARGET = $(BIN_DIR)/formdb
@@ -44,6 +46,7 @@ dirs:
 	@mkdir -p $(OBJ_DIR)/core
 	@mkdir -p $(OBJ_DIR)/ui
 	@mkdir -p $(OBJ_DIR)/storage
+	@mkdir -p $(OBJ_DIR)/search
 	@mkdir -p $(OBJ_DIR)/utils
 	@mkdir -p data/forms
 	@mkdir -p data/records
@@ -68,6 +71,11 @@ $(OBJ_DIR)/ui/%.o: $(SRC_DIR)/ui/%.c
 
 # Compilar arquivos storage
 $(OBJ_DIR)/storage/%.o: $(SRC_DIR)/storage/%.c
+	@echo "$(CYAN)→ Compilando $<$(NC)"
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+# Compilar arquivos search
+$(OBJ_DIR)/search/%.o: $(SRC_DIR)/search/%.c
 	@echo "$(CYAN)→ Compilando $<$(NC)"
 	@$(CC) $(CFLAGS) -c $< -o $@
 
