@@ -7,12 +7,6 @@
 #include <dirent.h>
 #include <unistd.h> // Para access()
 
-// Função auxiliar para limpar buffer
-static void limpar_buffer() {
-    int c;
-    while ((c = getchar()) != '\n' && c != EOF);
-}
-
 void listar_formularios() {
     printf(BOLD_CYAN "\n╔════════════════════════════════════════════════╗\n" RESET);
     printf(BOLD_CYAN "║          FORMULÁRIOS CADASTRADOS               ║\n" RESET);

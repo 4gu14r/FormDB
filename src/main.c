@@ -10,6 +10,7 @@
 #include "ui/form_builder.h"
 #include "ui/data_entry.h"
 #include "ui/form_browser.h"
+#include "search/search.h"
 #include "utils/colors.h"
 
 void criar_diretorios() {
@@ -168,9 +169,15 @@ void menu_principal() {
             
             case 5: {
                 // Buscar
-                printf(YELLOW "\n[Sistema de busca - Em desenvolvimento]\n" RESET);
-                printf("Pressione ENTER para continuar...");
-                getchar();
+                if (!formAtual) {
+                    printf(RED "\n✗ Nenhum formulário aberto!\n" RESET);
+                } else {
+                    RecordSet *recordset = preparar_recordset(formAtual, 0);
+                    
+                    menu_busca(formAtual, recordset);
+                    
+                    liberar_recordset(recordset);
+                }
                 break;
             }
             
