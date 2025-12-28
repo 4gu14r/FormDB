@@ -35,6 +35,7 @@ typedef struct {
 typedef struct {
     bool required;         // Campo obrigatório?
     bool unique;           // Valor deve ser único?
+    bool autoIncrement;    // Sugerir próximo valor automaticamente?
     
     // Para números
     bool hasMin;

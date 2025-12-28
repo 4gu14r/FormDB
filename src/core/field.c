@@ -24,6 +24,7 @@ Field* criar_campo(const char *name, const char *label, FieldType type) {
     // Inicializar validação padrão
     field->validation.required = false;
     field->validation.unique = false;
+    field->validation.autoIncrement = false;
     field->validation.hasMin = false;
     field->validation.hasMax = false;
     field->validation.minValue = 0;
