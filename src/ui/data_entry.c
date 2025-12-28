@@ -14,61 +14,93 @@
 #include <ctype.h>
 #include <errno.h>
 
-static void exibir_campo_info(Field *field) {
-    printf(BOLD_CYAN "\n%s" RESET, field->label);
+// Helper para concatenar string com segurança
+static void append_str(char *buffer, size_t size, const char *str) {
+    size_t len = strlen(buffer);
+    if (len < size - 1) {
+        strncat(buffer, str, size - len - 1);
+    }
+}
+
+static void gerar_info_campo(Field *field, char *buffer, size_t size) {
+    buffer[0] = '\0';
+    char temp[512];
+    
+    snprintf(temp, sizeof(temp), "\n" BOLD_CYAN "%s" RESET, field->label);
+    append_str(buffer, size, temp);
     
     if (field->validation.required) {
-        printf(RED " *" RESET);
+        append_str(buffer, size, RED " *" RESET);
     }
     
-    printf(" (%s)\n", tipo_campo_string(field->type));
+    snprintf(temp, sizeof(temp), " (%s)\n", tipo_campo_string(field->type));
+    append_str(buffer, size, temp);
     
     if (field->description[0]) {
-        printf(DIM "  %s\n" RESET, field->description);
+        snprintf(temp, sizeof(temp), DIM "  %s\n" RESET, field->description);
+        append_str(buffer, size, temp);
     }
     
     // Mostra restrições
     if (field->validation.hasMin) {
-        printf(YELLOW "  • Mínimo: %d\n" RESET, field->validation.minValue);
+        snprintf(temp, sizeof(temp), YELLOW "  • Mínimo: %d\n" RESET, field->validation.minValue);
+        append_str(buffer, size, temp);
     }
     if (field->validation.hasMax) {
-        printf(YELLOW "  • Máximo: %d\n" RESET, field->validation.maxValue);
+        snprintf(temp, sizeof(temp), YELLOW "  • Máximo: %d\n" RESET, field->validation.maxValue);
+        append_str(buffer, size, temp);
     }
     if (field->validation.minLength > 0) {
-        printf(YELLOW "  • Mín. caracteres: %d\n" RESET, field->validation.minLength);
+        snprintf(temp, sizeof(temp), YELLOW "  • Mín. caracteres: %d\n" RESET, field->validation.minLength);
+        append_str(buffer, size, temp);
     }
     if (field->type == FIELD_TEXT_SHORT && field->validation.maxLength < 100) {
-        printf(YELLOW "  • Máx. caracteres: %d\n" RESET, field->validation.maxLength);
+        snprintf(temp, sizeof(temp), YELLOW "  • Máx. caracteres: %d\n" RESET, field->validation.maxLength);
+        append_str(buffer, size, temp);
     }
     
     // Mostra opções se for escolha
     if (field->choices && field->choices->numOptions > 0) {
-        printf(CYAN "  Opções:\n" RESET);
+        append_str(buffer, size, CYAN "  Opções:\n" RESET);
         for (int i = 0; i < field->choices->numOptions; i++) {
-            printf(DIM "    %d. %s\n" RESET, i + 1, field->choices->options[i]);
+            snprintf(temp, sizeof(temp), DIM "    %d. %s\n" RESET, i + 1, field->choices->options[i]);
+            append_str(buffer, size, temp);
         }
     }
     
     // Mostra valor padrão
     if (field->defaultValue[0]) {
-        printf(GREEN "  [Padrão: %s]\n" RESET, field->defaultValue);
+        snprintf(temp, sizeof(temp), GREEN "  [Padrão: %s]\n" RESET, field->defaultValue);
+        append_str(buffer, size, temp);
     }
 }
 
-static bool ler_valor_campo(Field *field, char *value, size_t maxLen) {
-    printf(BOLD_WHITE "\n→ " RESET);
+static bool ler_valor_campo_dialogo(Field *field, char *value, size_t maxLen, const char *formTitle, const char *errorMsg) {
+    char prompt[4096];
+    prompt[0] = '\0';
+    
+    if (errorMsg && errorMsg[0]) {
+        char errBuf[300];
+        snprintf(errBuf, sizeof(errBuf), RED "\n⚠ %s\n" RESET, errorMsg);
+        append_str(prompt, sizeof(prompt), errBuf);
+    }
+    
+    char info[4096];
+    gerar_info_campo(field, info, sizeof(info));
+    append_str(prompt, sizeof(prompt), info);
+    
+    append_str(prompt, sizeof(prompt), "\n" BOLD_WHITE "→ " RESET);
     
     // Para campos booleanos, simplifica
     if (field->type == FIELD_BOOLEAN) {
-        printf("(s/n): ");
-        char resposta = ler_confirmacao();
+        append_str(prompt, sizeof(prompt), "(s/n): ");
+        char resposta = ler_confirmacao_dialogo(formTitle, prompt);
         
         if (resposta == 's' || resposta == 'S') {
             strcpy(value, "Sim");
         } else if (resposta == 'n' || resposta == 'N') {
             strcpy(value, "Não");
         } else {
-            // Se entrada vazia/inválida, verifica valor padrão
             if (field->defaultValue[0] && (strcmp(field->defaultValue, "1") == 0 || 
                 strcasecmp(field->defaultValue, "sim") == 0 || 
                 strcasecmp(field->defaultValue, "true") == 0)) {
@@ -82,12 +114,10 @@ static bool ler_valor_campo(Field *field, char *value, size_t maxLen) {
     
     // Para escolhas, mostra menu
     if (field->type == FIELD_CHOICE_SINGLE && field->choices) {
-        printf("Digite o número da opção: ");
+        append_str(prompt, sizeof(prompt), "Digite o número da opção: ");
         
         char input[50];
-        if (!ler_string_segura(input, sizeof(input))) {
-            return false;
-        }
+        if (!ler_texto_dialogo(formTitle, prompt, input, sizeof(input))) return false;
         
         // Se vazio e tem padrão, usa o padrão
         if (strlen(input) == 0 && field->defaultValue[0]) {
@@ -96,9 +126,7 @@ static bool ler_valor_campo(Field *field, char *value, size_t maxLen) {
         }
         
         int opcao = atoi(input);
-        
         if (opcao < 1 || opcao > field->choices->numOptions) {
-            printf(RED "Opção inválida!\n" RESET);
             return false;
         }
         
@@ -108,12 +136,10 @@ static bool ler_valor_campo(Field *field, char *value, size_t maxLen) {
     
     // Para avaliação (estrelas)
     if (field->type == FIELD_RATING) {
-        printf("Avaliação (1-5 estrelas): ");
+        append_str(prompt, sizeof(prompt), "Avaliação (1-5 estrelas): ");
         
         char input[50];
-        if (!ler_string_segura(input, sizeof(input))) {
-            return false;
-        }
+        if (!ler_texto_dialogo(formTitle, prompt, input, sizeof(input))) return false;
         
         // Se vazio e tem padrão, usa o padrão
         if (strlen(input) == 0 && field->defaultValue[0]) {
@@ -123,7 +149,6 @@ static bool ler_valor_campo(Field *field, char *value, size_t maxLen) {
         
         int rating = atoi(input);
         if (rating < 1 || rating > 5) {
-            printf(RED "Use valores entre 1 e 5\n" RESET);
             return false;
         }
         snprintf(value, maxLen, "%d", rating);
@@ -131,9 +156,7 @@ static bool ler_valor_campo(Field *field, char *value, size_t maxLen) {
     }
     
     // Para outros tipos, leitura normal
-    if (!ler_string_segura(value, maxLen)) {
-        return false;
-    }
+    if (!ler_texto_dialogo(formTitle, prompt, value, maxLen)) return false;
     
     // Se vazio e tem valor padrão, usa o padrão
     if (strlen(value) == 0 && field->defaultValue[0]) {
@@ -141,6 +164,24 @@ static bool ler_valor_campo(Field *field, char *value, size_t maxLen) {
     }
     
     return true;
+}
+
+static void exibir_campo_auto_dialogo(Field *field, const char *valor, const char *formTitle) {
+    char prompt[4096];
+    gerar_info_campo(field, prompt, sizeof(prompt));
+    
+    char valMsg[200];
+    snprintf(valMsg, sizeof(valMsg), "\n" BOLD_WHITE "→ " RESET GREEN "%s (Gerado automaticamente)\n" RESET, valor);
+    append_str(prompt, sizeof(prompt), valMsg);
+    append_str(prompt, sizeof(prompt), "\nPressione ENTER para continuar...");
+    
+    while(1) {
+        limpar_tela();
+        desenhar_cabecalho(formTitle);
+        printf("%s", prompt);
+        if (esperar_enter_check_resize()) continue;
+        break;
+    }
 }
 
 // Verifica se o valor é único no conjunto de registros
@@ -181,15 +222,7 @@ static void calcular_proximo_valor_auto(RecordSet *rs, int fieldId, char *buffer
 bool cadastrar_registro_interativo(Form *form, RecordSet *recordset) {
     if (!form || !recordset) return false;
     
-    limpar_tela();
-    
-    printf(BOLD_CYAN "╔════════════════════════════════════════════════════╗\n" RESET);
-    printf(BOLD_CYAN "║          CADASTRAR NOVO REGISTRO                   ║\n" RESET);
-    printf(BOLD_CYAN "╚════════════════════════════════════════════════════╝\n" RESET);
-    
-    printf(GREEN "\nFormulário: %s\n" RESET, form->displayName);
-    printf(DIM "Preencha os campos abaixo. Use ENTER vazio para valor padrão.\n" RESET);
-    printf(RED "* = Campo obrigatório\n" RESET);
+    const char *titulo = "CADASTRAR REGISTRO";
     
     // Cria novo registro
     Record *record = criar_registro(form, form->nextRecordId);
@@ -215,8 +248,7 @@ bool cadastrar_registro_interativo(Form *form, RecordSet *recordset) {
             char autoVal[MAX_VALUE_LENGTH];
             calcular_proximo_valor_auto(recordset, field->id, autoVal, sizeof(autoVal));
             
-            exibir_campo_info(field);
-            printf(BOLD_WHITE "\n→ " RESET GREEN "%s (Gerado automaticamente)\n" RESET, autoVal);
+            exibir_campo_auto_dialogo(field, autoVal, titulo);
             definir_valor_campo(record, field->id, autoVal);
             continue;
         }
@@ -225,12 +257,11 @@ bool cadastrar_registro_interativo(Form *form, RecordSet *recordset) {
         bool valorValido = false;
         int tentativas = 0;
         const int MAX_TENTATIVAS = 3;
+        errorMsg[0] = '\0';
         
         while (!valorValido && tentativas < MAX_TENTATIVAS) {
-            exibir_campo_info(field);
-            
-            if (!ler_valor_campo(field, value, sizeof(value))) {
-                printf(RED "Erro ao ler valor!\n" RESET);
+            if (!ler_valor_campo_dialogo(field, value, sizeof(value), titulo, errorMsg)) {
+                strcpy(errorMsg, "Valor inválido ou erro de leitura!");
                 tentativas++;
                 continue;
             }
@@ -239,32 +270,24 @@ bool cadastrar_registro_interativo(Form *form, RecordSet *recordset) {
             if (validar_valor_campo(field, value, errorMsg)) {
                 // Verifica unicidade se necessário
                 if (field->validation.unique && !verificar_unicidade(recordset, field->id, value)) {
-                    printf(RED "✗ Erro: O valor '%s' já existe e este campo deve ser único.\n" RESET, value);
+                    snprintf(errorMsg, sizeof(errorMsg), "O valor '%.150s' já existe e deve ser único.", value);
                     tentativas++;
-                    if (tentativas < MAX_TENTATIVAS) {
-                        printf(YELLOW "Tente novamente (%d/%d)\n" RESET, tentativas, MAX_TENTATIVAS);
-                    }
                 } else {
                     definir_valor_campo(record, field->id, value);
                     valorValido = true;
-                    printf(GREEN "✓ Valor aceito\n" RESET);
+                    // Feedback visual rápido? O próximo campo limpa a tela.
+                    // Podemos manter assim.
                 }
             } else {
-                printf(RED "✗ %s\n" RESET, errorMsg);
+                // errorMsg já foi preenchido por validar_valor_campo
                 tentativas++;
-                
-                if (tentativas < MAX_TENTATIVAS) {
-                    printf(YELLOW "Tente novamente (%d/%d)\n" RESET, 
-                           tentativas, MAX_TENTATIVAS);
-                }
             }
         }
         
         if (!valorValido) {
-            printf(RED "\nLimite de tentativas atingido para campo '%s'\n" RESET, 
-                   field->label);
-            printf("Deseja continuar mesmo assim? (s/n): ");
-            char resp = ler_confirmacao();
+            char prompt[300];
+            snprintf(prompt, sizeof(prompt), "\nLimite de tentativas atingido para campo '%s'\nDeseja continuar mesmo assim? (s/n): ", field->label);
+            char resp = ler_confirmacao_dialogo("AVISO", prompt);
             
             if (resp != 's' && resp != 'S') {
                 liberar_registro(record);
@@ -283,19 +306,23 @@ bool cadastrar_registro_interativo(Form *form, RecordSet *recordset) {
         snprintf(filepath, sizeof(filepath), "data/records/%s.csv", form->name);
         salvar_registros_csv(recordset, filepath);
         
+        limpar_tela();
+        desenhar_cabecalho("SUCESSO");
         printf(BOLD_GREEN "\n✓ Registro cadastrado e salvo com sucesso!\n" RESET);
         printf(GREEN "ID do registro: %d\n" RESET, record->id);
         printf(GREEN "Total de registros: %d\n" RESET, recordset->numRecords);
         
         sucesso = true;
     } else {
+        limpar_tela();
+        desenhar_cabecalho("ERRO");
         printf(RED "\n✗ Erro na validação final: %s\n" RESET, errorMsg);
         liberar_registro(record);
         sucesso = false;
     }
     
     printf("\nPressione ENTER para continuar...");
-    limpar_buffer();
+    esperar_enter_check_resize();
     
     return sucesso;
 }
