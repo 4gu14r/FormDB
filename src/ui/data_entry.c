@@ -1,3 +1,6 @@
+// Habilita extensões POSIX (necessário para strcasecmp com -std=c11)
+#define _DEFAULT_SOURCE
+
 #include "data_entry.h"
 #include "../core/form.h"
 #include "../core/field.h"
@@ -7,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <ctype.h>
 #include <errno.h>
 
@@ -64,7 +68,14 @@ static bool ler_valor_campo(Field *field, char *value, size_t maxLen) {
         } else if (resposta == 'n' || resposta == 'N') {
             strcpy(value, "Não");
         } else {
-            strcpy(value, "Não");
+            // Se entrada vazia/inválida, verifica valor padrão
+            if (field->defaultValue[0] && (strcmp(field->defaultValue, "1") == 0 || 
+                strcasecmp(field->defaultValue, "sim") == 0 || 
+                strcasecmp(field->defaultValue, "true") == 0)) {
+                strcpy(value, "Sim");
+            } else {
+                strcpy(value, "Não");
+            }
         }
         return true;
     }
@@ -72,12 +83,19 @@ static bool ler_valor_campo(Field *field, char *value, size_t maxLen) {
     // Para escolhas, mostra menu
     if (field->type == FIELD_CHOICE_SINGLE && field->choices) {
         printf("Digite o número da opção: ");
-        int opcao;
-        if (!ler_int_seguro(&opcao)) {
-            limpar_buffer();
+        
+        char input[50];
+        if (!ler_string_segura(input, sizeof(input))) {
             return false;
         }
-        limpar_buffer();
+        
+        // Se vazio e tem padrão, usa o padrão
+        if (strlen(input) == 0 && field->defaultValue[0]) {
+            strncpy(value, field->defaultValue, maxLen - 1);
+            return true;
+        }
+        
+        int opcao = atoi(input);
         
         if (opcao < 1 || opcao > field->choices->numOptions) {
             printf(RED "Opção inválida!\n" RESET);
@@ -91,13 +109,23 @@ static bool ler_valor_campo(Field *field, char *value, size_t maxLen) {
     // Para avaliação (estrelas)
     if (field->type == FIELD_RATING) {
         printf("Avaliação (1-5 estrelas): ");
-        int rating;
-        if (!ler_int_seguro(&rating) || rating < 1 || rating > 5) {
-            limpar_buffer();
+        
+        char input[50];
+        if (!ler_string_segura(input, sizeof(input))) {
+            return false;
+        }
+        
+        // Se vazio e tem padrão, usa o padrão
+        if (strlen(input) == 0 && field->defaultValue[0]) {
+            strncpy(value, field->defaultValue, maxLen - 1);
+            return true;
+        }
+        
+        int rating = atoi(input);
+        if (rating < 1 || rating > 5) {
             printf(RED "Use valores entre 1 e 5\n" RESET);
             return false;
         }
-        limpar_buffer();
         snprintf(value, maxLen, "%d", rating);
         return true;
     }
@@ -113,6 +141,41 @@ static bool ler_valor_campo(Field *field, char *value, size_t maxLen) {
     }
     
     return true;
+}
+
+// Verifica se o valor é único no conjunto de registros
+static bool verificar_unicidade(RecordSet *rs, int fieldId, const char *valor) {
+    if (!rs || rs->numRecords == 0) return true;
+
+    for (int i = 0; i < rs->numRecords; i++) {
+        const char *existingVal = obter_valor_campo(rs->records[i], fieldId);
+        if (existingVal && strcmp(existingVal, valor) == 0) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// Calcula o próximo valor numérico para campos auto-incremento
+static void calcular_proximo_valor_auto(RecordSet *rs, int fieldId, char *buffer, size_t maxLen) {
+    long maxVal = 0;
+    bool found = false;
+    
+    for (int i = 0; i < rs->numRecords; i++) {
+        const char *valStr = obter_valor_campo(rs->records[i], fieldId);
+        if (valStr && *valStr) {
+            char *endptr;
+            long val = strtol(valStr, &endptr, 10);
+            // Se conseguiu ler um número válido no início da string
+            if (endptr != valStr) { 
+                if (!found || val > maxVal) {
+                    maxVal = val;
+                    found = true;
+                }
+            }
+        }
+    }
+    snprintf(buffer, maxLen, "%ld", found ? maxVal + 1 : 1);
 }
 
 bool cadastrar_registro_interativo(Form *form, RecordSet *recordset) {
@@ -147,6 +210,17 @@ bool cadastrar_registro_interativo(Form *form, RecordSet *recordset) {
             continue;
         }
         
+        // Se for auto-incremento, gera o valor automaticamente e pula a digitação
+        if (field->validation.autoIncrement) {
+            char autoVal[MAX_VALUE_LENGTH];
+            calcular_proximo_valor_auto(recordset, field->id, autoVal, sizeof(autoVal));
+            
+            exibir_campo_info(field);
+            printf(BOLD_WHITE "\n→ " RESET GREEN "%s (Gerado automaticamente)\n" RESET, autoVal);
+            definir_valor_campo(record, field->id, autoVal);
+            continue;
+        }
+        
         char value[MAX_VALUE_LENGTH];
         bool valorValido = false;
         int tentativas = 0;
@@ -163,9 +237,18 @@ bool cadastrar_registro_interativo(Form *form, RecordSet *recordset) {
             
             // Valida valor
             if (validar_valor_campo(field, value, errorMsg)) {
-                definir_valor_campo(record, field->id, value);
-                valorValido = true;
-                printf(GREEN "✓ Valor aceito\n" RESET);
+                // Verifica unicidade se necessário
+                if (field->validation.unique && !verificar_unicidade(recordset, field->id, value)) {
+                    printf(RED "✗ Erro: O valor '%s' já existe e este campo deve ser único.\n" RESET, value);
+                    tentativas++;
+                    if (tentativas < MAX_TENTATIVAS) {
+                        printf(YELLOW "Tente novamente (%d/%d)\n" RESET, tentativas, MAX_TENTATIVAS);
+                    }
+                } else {
+                    definir_valor_campo(record, field->id, value);
+                    valorValido = true;
+                    printf(GREEN "✓ Valor aceito\n" RESET);
+                }
             } else {
                 printf(RED "✗ %s\n" RESET, errorMsg);
                 tentativas++;

@@ -101,6 +101,12 @@ void configurar_validacao(Field *field) {
     opcao = ler_confirmacao();
     field->validation.unique = (opcao == 's' || opcao == 'S');
     
+    if (field->validation.unique) {
+        printf("Ativar sugestão de auto-incremento (ex: 001 -> 002)? (s/n): ");
+        opcao = ler_confirmacao();
+        field->validation.autoIncrement = (opcao == 's' || opcao == 'S');
+    }
+    
     // Validações específicas por tipo
     switch (field->type) {
         case FIELD_NUMBER:

@@ -159,6 +159,13 @@ void menu_principal() {
                         liberar_formulario(formAtual);
                     }
                     formAtual = novoForm;
+                    
+                    // Atualiza a contagem de registros lendo do disco
+                    RecordSet *rs = preparar_recordset(formAtual, 0);
+                    if (rs) {
+                        formAtual->totalRecords = rs->numRecords;
+                        liberar_recordset(rs);
+                    }
                 }
                 break;
             }
@@ -173,6 +180,10 @@ void menu_principal() {
                     
                     menu_cadastro(formAtual, recordset);
                     
+                    // Atualiza a contagem de registros no formulário principal
+                    if (recordset) {
+                        formAtual->totalRecords = recordset->numRecords;
+                    }
                     liberar_recordset(recordset);
                 }
                 break;
