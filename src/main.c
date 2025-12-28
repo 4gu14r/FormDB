@@ -84,6 +84,7 @@ void handle_resize(int sig) {
 void menu_principal() {
     int opcao;
     Form *formAtual = NULL;
+    char msgErro[512] = "";
     
     // Configurar captura de sinal de redimensionamento (Linux/Mac)
     #ifndef _WIN32
@@ -97,29 +98,30 @@ void menu_principal() {
     do {
         limpar_tela(); // Limpa a tela a cada iteração para redesenhar corretamente
         desenhar_cabecalho("MENU PRINCIPAL");
+        printf("   0. " RED "🚪 Sair\n" RESET);
         
-        printf(CYAN "   " RESET "0. " RED "🚪 Sair\n" RESET);
-        printf(CYAN "   " RESET "1. " GREEN "📝 Criar Novo Formulário\n" RESET);
-        printf(CYAN "   " RESET "2. " GREEN "📋 Abrir Formulário Existente\n" RESET);
-        printf(CYAN "   " RESET "3. " GREEN "✏️  Cadastrar Dados\n" RESET);
-        printf(CYAN "   " RESET "4. " GREEN "📊 Ver Registros\n" RESET);
-        printf(CYAN "   " RESET "5. " GREEN "🔍 Buscar/Filtrar\n" RESET);
-        printf(CYAN "   " RESET "6. " GREEN "📤 Exportar Dados\n" RESET);
-        printf(CYAN "   " RESET "7. " GREEN "📥 Importar Dados\n" RESET);
-        printf(CYAN "   " RESET "8. " GREEN "📈 Relatórios e Estatísticas\n" RESET);
-        printf(CYAN "   " RESET "9. " GREEN "🗂️  Gerenciar Formulários\n" RESET);
-        printf(CYAN "   " RESET "10." GREEN "💾 Templates Prontos\n" RESET);
-        
-        // Linha de rodapé simples para fechar visualmente se quiser, 
-        // ou apenas deixar o cabeçalho como título.
-        // Vou deixar sem borda lateral no menu para ficar mais limpo,
-        // já que o cabeçalho já define a largura.
+        printf("   1. " GREEN "📝 Criar Novo Formulário\n" RESET);
+        printf("   2. " GREEN "📋 Abrir Formulário Existente\n" RESET);
+        printf("   3. " GREEN "✏️  Cadastrar Dados\n" RESET);
+        printf("   4. " GREEN "📊 Ver Registros\n" RESET);
+        printf("   5. " GREEN "🔍 Buscar/Filtrar\n" RESET);
+        printf("   6. " GREEN "📤 Exportar Dados\n" RESET);
+        printf("   7. " GREEN "📥 Importar Dados\n" RESET);
+        printf("   8. " GREEN "📈 Relatórios e Estatísticas\n" RESET);
+        printf("   9. " GREEN "🗂️  Gerenciar Formulários\n" RESET);
+        printf("   10." GREEN "💾 Templates Prontos\n" RESET);
         
         if (formAtual) {
             printf(GREEN "\n✓ Formulário ativo: %s (%d campos, %d registros)\n" RESET,
                    formAtual->displayName, formAtual->numFields, formAtual->totalRecords);
         } else {
             printf(YELLOW "\n⚠ Nenhum formulário aberto\n" RESET);
+        }
+        
+        // Exibe mensagem de erro se houver (persiste após limpar tela)
+        if (msgErro[0] != '\0') {
+            printf("%s", msgErro);
+            msgErro[0] = '\0';
         }
         
         printf("\n" BOLD_WHITE "Escolha uma opção: " RESET);
@@ -174,8 +176,7 @@ void menu_principal() {
             case 3: {
                 // Cadastrar dados
                 if (!formAtual) {
-                    printf(RED "\n✗ Nenhum formulário aberto!\n" RESET);
-                    printf("Crie ou abra um formulário primeiro.\n");
+                    snprintf(msgErro, sizeof(msgErro), RED "\n✗ Nenhum formulário aberto." RESET DIM " Crie ou abra um formulário primeiro!\n" RESET);
                 } else {
                     RecordSet *recordset = preparar_recordset(formAtual, 1);
                     
@@ -193,7 +194,7 @@ void menu_principal() {
             case 4: {
                 // Ver registros
                 if (!formAtual) {
-                    printf(RED "\n✗ Nenhum formulário aberto!\n" RESET);
+                    snprintf(msgErro, sizeof(msgErro), RED "\n✗ Nenhum formulário aberto." RESET DIM " Crie ou abra um formulário primeiro!\n" RESET);
                 } else {
                     RecordSet *recordset = preparar_recordset(formAtual, 0);
                     
@@ -207,7 +208,7 @@ void menu_principal() {
             case 5: {
                 // Buscar
                 if (!formAtual) {
-                    printf(RED "\n✗ Nenhum formulário aberto!\n" RESET);
+                    snprintf(msgErro, sizeof(msgErro), RED "\n✗ Nenhum formulário aberto." RESET DIM " Crie ou abra um formulário primeiro!\n" RESET);
                 } else {
                     RecordSet *recordset = preparar_recordset(formAtual, 0);
                     
@@ -221,7 +222,7 @@ void menu_principal() {
             case 6: {
                 // Exportar
                 if (!formAtual) {
-                    printf(RED "\n✗ Nenhum formulário aberto!\n" RESET);
+                    snprintf(msgErro, sizeof(msgErro), RED "\n✗ Nenhum formulário aberto." RESET DIM " Crie ou abra um formulário primeiro!\n" RESET);
                 } else {
                     RecordSet *recordset = preparar_recordset(formAtual, 0);
                     menu_exportar(formAtual, recordset);
