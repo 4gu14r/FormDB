@@ -210,7 +210,12 @@ bool cadastrar_registro_interativo(Form *form, RecordSet *recordset) {
         adicionar_registro(recordset, record);
         form->nextRecordId++;
         
-        printf(BOLD_GREEN "\n✓ Registro cadastrado com sucesso!\n" RESET);
+        // Salvar automaticamente no disco para evitar perda de dados
+        char filepath[300];
+        snprintf(filepath, sizeof(filepath), "data/records/%s.csv", form->name);
+        salvar_registros_csv(recordset, filepath);
+        
+        printf(BOLD_GREEN "\n✓ Registro cadastrado e salvo com sucesso!\n" RESET);
         printf(GREEN "ID do registro: %d\n" RESET, record->id);
         printf(GREEN "Total de registros: %d\n" RESET, recordset->numRecords);
         
