@@ -199,7 +199,7 @@ bool ler_texto_dialogo(const char *titulo, const char *texto, char *buffer, size
                 printf("\b \b");
                 fflush(stdout);
             }
-        } else if (c >= 32 && c < 127) { // Caracteres imprimíveis
+        } else if ((unsigned char)c >= 32) { // Caracteres imprimíveis (incluindo UTF-8)
             if (pos < tamanho - 1) {
                 buffer[pos++] = c;
                 buffer[pos] = '\0';
