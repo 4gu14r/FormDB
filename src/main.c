@@ -19,6 +19,7 @@
 #include "search/search.h"
 #include "utils/colors.h"
 #include "utils/ui_utils.h"
+#include "utils/record_utils.h"
 
 void criar_diretorios() {
     struct stat st = {0};
