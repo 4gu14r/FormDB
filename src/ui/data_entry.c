@@ -332,6 +332,9 @@ void visualizar_registros(RecordSet *recordset) {
     
     Form *form = recordset->form;
     
+    int pagina_atual = 0;
+    const int REGISTROS_POR_PAGINA = 3; // Define quantos registros aparecem por tela
+    
     while (1) {
         limpar_tela();
         desenhar_cabecalho("REGISTROS CADASTRADOS");
@@ -348,8 +351,20 @@ void visualizar_registros(RecordSet *recordset) {
         
         printf("\n");
         
-        // Exibe cada registro
-        for (int i = 0; i < recordset->numRecords; i++) {
+        // Cálculos da paginação
+        int total_paginas = (recordset->numRecords + REGISTROS_POR_PAGINA - 1) / REGISTROS_POR_PAGINA;
+        if (total_paginas == 0) total_paginas = 1;
+        
+        // Garante que a página atual é válida
+        if (pagina_atual >= total_paginas) pagina_atual = total_paginas - 1;
+        if (pagina_atual < 0) pagina_atual = 0;
+        
+        int inicio = pagina_atual * REGISTROS_POR_PAGINA;
+        int fim = inicio + REGISTROS_POR_PAGINA;
+        if (fim > recordset->numRecords) fim = recordset->numRecords;
+        
+        // Exibe apenas os registros da página atual
+        for (int i = inicio; i < fim; i++) {
             Record *record = recordset->records[i];
             
             desenhar_separador();
@@ -392,9 +407,31 @@ void visualizar_registros(RecordSet *recordset) {
         }
         
         desenhar_separador();
-        printf("\nPressione ENTER para continuar...");
-        if (esperar_enter_check_resize()) continue;
-        break;
+        
+        // Rodapé com navegação
+        printf("Página %d de %d | Total: %d registros\n", pagina_atual + 1, total_paginas, recordset->numRecords);
+        printf(CYAN "[N] Próxima  [P] Anterior  [0] Voltar\n" RESET);
+        printf("\nEscolha: ");
+        
+        // Leitura do comando (manual para tratar resize corretamente aqui)
+        char buffer[100];
+        if (fgets(buffer, sizeof(buffer), stdin) == NULL) {
+            if (errno == EINTR) continue; // Resize detectado, redesenha
+            break;
+        }
+        
+        // Processa a opção
+        char opcao = buffer[0];
+        if (opcao == 'n' || opcao == 'N') {
+            if (pagina_atual < total_paginas - 1) pagina_atual++;
+        }
+        else if (opcao == 'p' || opcao == 'P') {
+            if (pagina_atual > 0) pagina_atual--;
+        }
+        else if (opcao == '0') {
+            break;
+        }
+        // Se for qualquer outra coisa ou enter vazio, apenas redesenha (útil para atualizar visualização)
     }
 }
 
