@@ -3,10 +3,12 @@
 #include "../core/field.h"
 #include "../utils/colors.h"
 #include "../utils/ui_utils.h"
+#include "../utils/string_utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <ctype.h>
 
 void exibir_tipos_campo() {
     desenhar_cabecalho("TIPOS DE CAMPO DISPONÍVEIS");
@@ -225,6 +227,9 @@ Form* construir_formulario_interativo() {
     
     // Nome do formulário
     ler_texto_dialogo("CONSTRUTOR DE FORMULÁRIOS", "\nNome interno do formulário (ex: 'produtos'): ", name, sizeof(name));
+    
+    // Normalizar para minúsculas para evitar problemas de case-sensitivity
+    str_to_lower(name);
     
     ler_texto_dialogo("CONSTRUTOR DE FORMULÁRIOS", "\nNome exibido (ex: 'Cadastro de Produtos'): ", displayName, sizeof(displayName));
     
