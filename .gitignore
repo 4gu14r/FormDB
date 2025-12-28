@@ -2,3 +2,4 @@ bin
 data
 exports
 .vscode
+build.sh
