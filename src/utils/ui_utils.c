@@ -130,8 +130,8 @@ void desenhar_cabecalho(const char *titulo) {
 void desenhar_separador() {
     int largura = obter_largura_terminal();
     printf(CYAN);
-    for (int i = 0; i < largura; i++) printf("─");
-    printf("\n" RESET);
+    for (int i = 0; i < largura - 1; i++) printf("─");
+    printf(" \n" RESET);
 }
 
 // --- Implementação dos Diálogos ---
