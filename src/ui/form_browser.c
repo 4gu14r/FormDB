@@ -1,49 +1,75 @@
 /* /workspaces/RegistroPessoas/src/ui/form_browser.c */
+// Habilita usleep (necessário com -std=c11)
+#define _DEFAULT_SOURCE
+
 #include "form_browser.h"
 #include "../utils/colors.h"
+#include "../utils/ui_utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
 #include <unistd.h> // Para access()
 
-void listar_formularios() {
-    printf(BOLD_CYAN "\n╔════════════════════════════════════════════════╗\n" RESET);
-    printf(BOLD_CYAN "║          FORMULÁRIOS CADASTRADOS               ║\n" RESET);
-    printf(BOLD_CYAN "╚════════════════════════════════════════════════╝\n" RESET);
-    
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
+// Helper para obter lista de formulários em string
+static void obter_lista_formularios(char *buffer, size_t size) {
+    buffer[0] = '\0';
     DIR *d;
     struct dirent *dir;
     d = opendir("data/forms");
+    
+    strcat(buffer, "\n");
+    
+    int count = 0;
     if (d) {
-        int count = 0;
         while ((dir = readdir(d)) != NULL) {
             if (strcmp(dir->d_name, ".") == 0 || strcmp(dir->d_name, "..") == 0) continue;
             
             char *dot = strrchr(dir->d_name, '.');
             if (dot && strcmp(dot, ".form") == 0) {
-                printf(CYAN "  • %s\n" RESET, dir->d_name);
+                char line[300];
+                snprintf(line, sizeof(line), CYAN "  • %s\n" RESET, dir->d_name);
+                if (strlen(buffer) + strlen(line) < size - 100) {
+                    strcat(buffer, line);
+                }
                 count++;
             }
         }
         closedir(d);
-        
-        if (count == 0) {
-            printf(YELLOW "  (Nenhum formulário encontrado)\n" RESET);
-        }
-    } else {
-        printf(RED "  Erro ao abrir diretório data/forms\n" RESET);
     }
-    printf("\n");
+    
+    if (count == 0) {
+        strcat(buffer, YELLOW "  (Nenhum formulário encontrado)\n" RESET);
+    }
+    strcat(buffer, "\n");
+}
+
+void listar_formularios() {
+    char buffer[4096];
+    obter_lista_formularios(buffer, sizeof(buffer));
+    
+    limpar_tela();
+    desenhar_cabecalho("FORMULÁRIOS CADASTRADOS");
+    printf("%s", buffer);
 }
 
 Form* selecionar_formulario_interativo() {
-    listar_formularios();
-    
+    char list_buffer[4096];
+    char prompt_buffer[5000];
     char filename[100];
-    printf("Digite o nome do arquivo (ex: produtos.form) ou ENTER para voltar: ");
-    fgets(filename, sizeof(filename), stdin);
-    filename[strcspn(filename, "\n")] = '\0';
+    
+    // Prepara lista
+    obter_lista_formularios(list_buffer, sizeof(list_buffer));
+    
+    // Monta prompt
+    snprintf(prompt_buffer, sizeof(prompt_buffer), "%sDigite o nome do arquivo (ex: produtos.form) ou ENTER para voltar: ", list_buffer);
+    
+    // Input responsivo
+    ler_texto_dialogo("FORMULÁRIOS CADASTRADOS", prompt_buffer, filename, sizeof(filename));
     
     if (strlen(filename) == 0) {
         return NULL;
@@ -61,6 +87,11 @@ Form* selecionar_formulario_interativo() {
         Form *form = carregar_formulario(filepath);
         if (form) {
             printf(GREEN "\n✓ Formulário '%s' carregado com sucesso!\n" RESET, form->displayName);
+            #ifdef _WIN32
+            Sleep(1000);
+            #else
+            usleep(1000000);
+            #endif
             return form;
         } else {
             printf(RED "\n✗ Erro ao carregar formulário!\n" RESET);
@@ -70,7 +101,7 @@ Form* selecionar_formulario_interativo() {
     }
     
     printf("\nPressione ENTER para continuar...");
-    getchar();
+    limpar_buffer();
     
     return NULL; // Retorna NULL em caso de erro, o main mantém o form anterior se houver
 }

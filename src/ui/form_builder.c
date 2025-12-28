@@ -2,25 +2,14 @@
 #include "../core/form.h"
 #include "../core/field.h"
 #include "../utils/colors.h"
+#include "../utils/ui_utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-void limpar_tela() {
-    #ifdef _WIN32
-        system("cls");
-    #else
-        system("clear");
-    #endif
-}
-
-void limpar_buffer() {
-    int c;
-    while ((c = getchar()) != '\n' && c != EOF);
-}
+#include <errno.h>
 
 void exibir_tipos_campo() {
-    printf("\n" CYAN "═══ TIPOS DE CAMPO DISPONÍVEIS ═══\n" RESET);
+    desenhar_cabecalho("TIPOS DE CAMPO DISPONÍVEIS");
     printf("\n" GREEN "Textos:\n" RESET);
     printf("  1. Texto Curto        (até 100 caracteres)\n");
     printf("  2. Texto Longo        (até 1000 caracteres)\n");
@@ -49,25 +38,39 @@ void exibir_tipos_campo() {
     printf(" 17. Lista (múltipla)   (checkboxes)\n");
     printf(" 18. Avaliação          (★★★★★)\n");
     
-    printf("\n" CYAN "═══════════════════════════════════\n" RESET);
+    printf("\n");
+    desenhar_separador();
 }
 
 FieldType selecionar_tipo_campo() {
     int opcao;
+    bool erro = false;
     
     do {
+        limpar_tela();
         exibir_tipos_campo();
+        
+        if (erro) {
+            printf(RED "\nOpção inválida! Tente novamente.\n" RESET);
+            erro = false;
+        }
+        
         printf("\nEscolha o tipo (1-18): ");
-        if (scanf("%d", &opcao) != 1) {
+        
+        int result = scanf("%d", &opcao);
+        
+        if (result == EOF && errno == EINTR) continue;
+        
+        if (result != 1) {
             limpar_buffer();
-            printf(RED "Opção inválida!\n" RESET);
+            erro = true;
             opcao = 0;
             continue;
         }
         limpar_buffer();
         
         if (opcao < 1 || opcao > 18) {
-            printf(RED "Opção inválida!\n" RESET);
+            erro = true;
         }
     } while (opcao < 1 || opcao > 18);
     
@@ -90,14 +93,12 @@ void configurar_validacao(Field *field) {
     
     // Campo obrigatório
     printf("\nCampo obrigatório? (s/n): ");
-    opcao = getchar();
-    limpar_buffer();
+    opcao = ler_confirmacao();
     field->validation.required = (opcao == 's' || opcao == 'S');
     
     // Valor único
     printf("Valor deve ser único? (s/n): ");
-    opcao = getchar();
-    limpar_buffer();
+    opcao = ler_confirmacao();
     field->validation.unique = (opcao == 's' || opcao == 'S');
     
     // Validações específicas por tipo
@@ -106,21 +107,19 @@ void configurar_validacao(Field *field) {
         case FIELD_DECIMAL:
         case FIELD_MONEY: {
             printf("\nDefinir valor mínimo? (s/n): ");
-            opcao = getchar();
-            limpar_buffer();
+            opcao = ler_confirmacao();
             if (opcao == 's' || opcao == 'S') {
                 printf("Valor mínimo: ");
-                scanf("%d", &field->validation.minValue);
+                ler_int_seguro(&field->validation.minValue);
                 limpar_buffer();
                 field->validation.hasMin = true;
             }
             
             printf("Definir valor máximo? (s/n): ");
-            opcao = getchar();
-            limpar_buffer();
+            opcao = ler_confirmacao();
             if (opcao == 's' || opcao == 'S') {
                 printf("Valor máximo: ");
-                scanf("%d", &field->validation.maxValue);
+                ler_int_seguro(&field->validation.maxValue);
                 limpar_buffer();
                 field->validation.hasMax = true;
             }
@@ -130,11 +129,11 @@ void configurar_validacao(Field *field) {
         case FIELD_TEXT_SHORT:
         case FIELD_TEXT_LONG: {
             printf("\nTamanho mínimo (0 para nenhum): ");
-            scanf("%d", &field->validation.minLength);
+            ler_int_seguro(&field->validation.minLength);
             limpar_buffer();
             
             printf("Tamanho máximo: ");
-            scanf("%d", &field->validation.maxLength);
+            ler_int_seguro(&field->validation.maxLength);
             limpar_buffer();
             break;
         }
@@ -151,16 +150,14 @@ void adicionar_opcoes_escolha(Field *field) {
         return;
     }
     
-    printf("\n" CYAN "═══ ADICIONAR OPÇÕES ═══\n" RESET);
-    printf("Digite as opções (uma por linha, linha vazia para terminar):\n\n");
-    
     char opcao[200];
+    char prompt[100];
     int count = 0;
     
     while (1) {
-        printf("Opção %d: ", count + 1);
-        fgets(opcao, sizeof(opcao), stdin);
-        opcao[strcspn(opcao, "\n")] = '\0';
+        snprintf(prompt, sizeof(prompt), "\nDigite a opção %d (vazio para terminar): ", count + 1);
+        
+        ler_texto_dialogo("ADICIONAR OPÇÕES", prompt, opcao, sizeof(opcao));
         
         if (strlen(opcao) == 0) {
             break;
@@ -176,22 +173,14 @@ void adicionar_opcoes_escolha(Field *field) {
 Field* construir_campo_interativo() {
     char name[100], label[100], desc[200];
     
-    printf("\n" CYAN "═══ CRIAR NOVO CAMPO ═══\n" RESET);
-    
     // Nome interno
-    printf("\nNome interno (sem espaços, ex: 'preco_produto'): ");
-    fgets(name, sizeof(name), stdin);
-    name[strcspn(name, "\n")] = '\0';
+    ler_texto_dialogo("CRIAR NOVO CAMPO", "\nNome interno (sem espaços, ex: 'preco_produto'): ", name, sizeof(name));
     
     // Label
-    printf("Nome exibido (ex: 'Preço do Produto'): ");
-    fgets(label, sizeof(label), stdin);
-    label[strcspn(label, "\n")] = '\0';
+    ler_texto_dialogo("CRIAR NOVO CAMPO", "\nNome exibido (ex: 'Preço do Produto'): ", label, sizeof(label));
     
     // Descrição
-    printf("Descrição/Ajuda (opcional): ");
-    fgets(desc, sizeof(desc), stdin);
-    desc[strcspn(desc, "\n")] = '\0';
+    ler_texto_dialogo("CRIAR NOVO CAMPO", "\nDescrição/Ajuda (opcional): ", desc, sizeof(desc));
     
     // Tipo
     FieldType tipo = selecionar_tipo_campo();
@@ -203,9 +192,7 @@ Field* construir_campo_interativo() {
     }
     
     // Configurar validações
-    printf("\nConfigurar validações? (s/n): ");
-    char opcao = getchar();
-    limpar_buffer();
+    char opcao = ler_confirmacao_dialogo("CONFIGURAÇÃO", "\nConfigurar validações? (s/n): ");
     if (opcao == 's' || opcao == 'S') {
         configurar_validacao(field);
     }
@@ -216,13 +203,10 @@ Field* construir_campo_interativo() {
     }
     
     // Valor padrão
-    printf("\nDefinir valor padrão? (s/n): ");
-    opcao = getchar();
-    limpar_buffer();
+    opcao = ler_confirmacao_dialogo("CONFIGURAÇÃO", "\nDefinir valor padrão? (s/n): ");
     if (opcao == 's' || opcao == 'S') {
         printf("Valor padrão: ");
-        fgets(field->defaultValue, sizeof(field->defaultValue), stdin);
-        field->defaultValue[strcspn(field->defaultValue, "\n")] = '\0';
+        ler_string_segura(field->defaultValue, sizeof(field->defaultValue));
     }
     
     printf(GREEN "\n✓ Campo criado com sucesso!\n" RESET);
@@ -233,27 +217,12 @@ Field* construir_campo_interativo() {
 Form* construir_formulario_interativo() {
     char name[100], displayName[100], desc[300];
     
-    limpar_tela();
-    printf(CYAN);
-    printf("╔════════════════════════════════════════════════════╗\n");
-    printf("║                                                    ║\n");
-    printf("║         CONSTRUTOR DE FORMULÁRIOS                  ║\n");
-    printf("║                                                    ║\n");
-    printf("╚════════════════════════════════════════════════════╝\n");
-    printf(RESET "\n");
-    
     // Nome do formulário
-    printf("Nome interno do formulário (ex: 'produtos'): ");
-    fgets(name, sizeof(name), stdin);
-    name[strcspn(name, "\n")] = '\0';
+    ler_texto_dialogo("CONSTRUTOR DE FORMULÁRIOS", "\nNome interno do formulário (ex: 'produtos'): ", name, sizeof(name));
     
-    printf("Nome exibido (ex: 'Cadastro de Produtos'): ");
-    fgets(displayName, sizeof(displayName), stdin);
-    displayName[strcspn(displayName, "\n")] = '\0';
+    ler_texto_dialogo("CONSTRUTOR DE FORMULÁRIOS", "\nNome exibido (ex: 'Cadastro de Produtos'): ", displayName, sizeof(displayName));
     
-    printf("Descrição (opcional): ");
-    fgets(desc, sizeof(desc), stdin);
-    desc[strcspn(desc, "\n")] = '\0';
+    ler_texto_dialogo("CONSTRUTOR DE FORMULÁRIOS", "\nDescrição (opcional): ", desc, sizeof(desc));
     
     // Criar formulário
     Form *form = criar_formulario(name, displayName);
@@ -273,9 +242,7 @@ Form* construir_formulario_interativo() {
         printf("\n" CYAN "Campo adicionado! Total de campos: %d\n" RESET, form->numFields);
         
         if (form->numFields < MAX_FIELDS) {
-            printf("\nAdicionar outro campo? (s/n): ");
-            continuar = getchar();
-            limpar_buffer();
+            continuar = ler_confirmacao_dialogo("CONTINUAR?", "\nAdicionar outro campo? (s/n): ");
         } else {
             printf(YELLOW "\nLimite máximo de campos atingido!\n" RESET);
             break;
@@ -284,20 +251,12 @@ Form* construir_formulario_interativo() {
     
     // Resumo
     limpar_tela();
-    printf(GREEN);
-    printf("╔════════════════════════════════════════════════════╗\n");
-    printf("║                                                    ║\n");
-    printf("║         FORMULÁRIO CRIADO COM SUCESSO!             ║\n");
-    printf("║                                                    ║\n");
-    printf("╚════════════════════════════════════════════════════╝\n");
-    printf(RESET "\n");
+    desenhar_cabecalho("FORMULÁRIO CRIADO COM SUCESSO!");
     
     exibir_estrutura_formulario(form);
     
     // Salvar
-    printf("\nSalvar formulário? (s/n): ");
-    char salvar = getchar();
-    limpar_buffer();
+    char salvar = ler_confirmacao_dialogo("FINALIZAR", "\nSalvar formulário? (s/n): ");
     
     if (salvar == 's' || salvar == 'S') {
         char filepath[300];

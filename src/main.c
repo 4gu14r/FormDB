@@ -1,17 +1,24 @@
+// Habilita definições POSIX (necessário para sigaction com -std=c11)
+#define _POSIX_C_SOURCE 200809L
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <dirent.h>
 #include <unistd.h>
+#include <signal.h>
+#include <errno.h>
 #include "core/form.h"
 #include "core/field.h"
 #include "core/record.h"
 #include "ui/form_builder.h"
 #include "ui/data_entry.h"
 #include "ui/form_browser.h"
+#include "ui/exporter.h"
 #include "search/search.h"
 #include "utils/colors.h"
+#include "utils/ui_utils.h"
 
 void criar_diretorios() {
     struct stat st = {0};
@@ -51,11 +58,6 @@ void exibir_banner() {
     printf("\n");
 }
 
-void limpar_buffer_input() {
-    int c;
-    while ((c = getchar()) != '\n' && c != EOF);
-}
-
 RecordSet* preparar_recordset(Form *form, int exibir_mensagem) {
     RecordSet *recordset = criar_recordset(form);
     
@@ -73,28 +75,44 @@ RecordSet* preparar_recordset(Form *form, int exibir_mensagem) {
     return recordset;
 }
 
+// Handler vazio apenas para interromper o scanf quando redimensionar
+void handle_resize(int sig) {
+    (void)sig;
+}
+
 void menu_principal() {
     int opcao;
     Form *formAtual = NULL;
     
+    // Configurar captura de sinal de redimensionamento (Linux/Mac)
+    #ifndef _WIN32
+    struct sigaction sa;
+    sa.sa_handler = handle_resize;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0; // Importante: NÃO usar SA_RESTART para que o scanf seja interrompido
+    sigaction(SIGWINCH, &sa, NULL);
+    #endif
+    
     do {
-        printf(BOLD_CYAN "\n╔════════════════════════════════════════════════╗\n" RESET);
-        printf(BOLD_CYAN "║              MENU PRINCIPAL                    ║\n" RESET);
-        printf(BOLD_CYAN "╠════════════════════════════════════════════════╣\n" RESET);
-        printf(CYAN "║                                                ║\n" RESET);
-        printf(CYAN "║  " RESET "1. " GREEN "📝 Criar Novo Formulário" CYAN "                   ║\n" RESET);
-        printf(CYAN "║  " RESET "2. " GREEN "📋 Abrir Formulário Existente" CYAN "              ║\n" RESET);
-        printf(CYAN "║  " RESET "3. " GREEN "✏️  Cadastrar Dados" CYAN "                        ║\n" RESET);
-        printf(CYAN "║  " RESET "4. " GREEN "📊 Ver Registros" CYAN "                          ║\n" RESET);
-        printf(CYAN "║  " RESET "5. " GREEN "🔍 Buscar/Filtrar" CYAN "                         ║\n" RESET);
-        printf(CYAN "║  " RESET "6. " GREEN "📤 Exportar Dados" CYAN "                         ║\n" RESET);
-        printf(CYAN "║  " RESET "7. " GREEN "📥 Importar Dados" CYAN "                         ║\n" RESET);
-        printf(CYAN "║  " RESET "8. " GREEN "📈 Relatórios e Estatísticas" CYAN "              ║\n" RESET);
-        printf(CYAN "║  " RESET "9. " GREEN "🗂️  Gerenciar Formulários" CYAN "                 ║\n" RESET);
-        printf(CYAN "║  " RESET "10." GREEN " 💾 Templates Prontos" CYAN "                     ║\n" RESET);
-        printf(CYAN "║  " RESET "0. " RED "🚪 Sair" CYAN "                                   ║\n" RESET);
-        printf(CYAN "║                                                ║\n" RESET);
-        printf(BOLD_CYAN "╚════════════════════════════════════════════════╝\n" RESET);
+        limpar_tela(); // Limpa a tela a cada iteração para redesenhar corretamente
+        desenhar_cabecalho("MENU PRINCIPAL");
+        
+        printf(CYAN "   " RESET "1. " GREEN "📝 Criar Novo Formulário\n" RESET);
+        printf(CYAN "   " RESET "2. " GREEN "📋 Abrir Formulário Existente\n" RESET);
+        printf(CYAN "   " RESET "3. " GREEN "✏️  Cadastrar Dados\n" RESET);
+        printf(CYAN "   " RESET "4. " GREEN "📊 Ver Registros\n" RESET);
+        printf(CYAN "   " RESET "5. " GREEN "🔍 Buscar/Filtrar\n" RESET);
+        printf(CYAN "   " RESET "6. " GREEN "📤 Exportar Dados\n" RESET);
+        printf(CYAN "   " RESET "7. " GREEN "📥 Importar Dados\n" RESET);
+        printf(CYAN "   " RESET "8. " GREEN "📈 Relatórios e Estatísticas\n" RESET);
+        printf(CYAN "   " RESET "9. " GREEN "🗂️  Gerenciar Formulários\n" RESET);
+        printf(CYAN "   " RESET "10." GREEN " 💾 Templates Prontos\n" RESET);
+        printf(CYAN "   " RESET "0. " RED "🚪 Sair\n" RESET);
+        
+        // Linha de rodapé simples para fechar visualmente se quiser, 
+        // ou apenas deixar o cabeçalho como título.
+        // Vou deixar sem borda lateral no menu para ficar mais limpo,
+        // já que o cabeçalho já define a largura.
         
         if (formAtual) {
             printf(GREEN "\n✓ Formulário ativo: %s (%d campos, %d registros)\n" RESET,
@@ -105,12 +123,19 @@ void menu_principal() {
         
         printf("\n" BOLD_WHITE "Escolha uma opção: " RESET);
         
-        if (scanf("%d", &opcao) != 1) {
-            limpar_buffer_input();
+        int result = scanf("%d", &opcao);
+        
+        // Se foi interrompido pelo resize (EINTR), apenas redesenha
+        if (result == EOF && errno == EINTR) {
+            continue;
+        }
+        
+        if (result != 1) {
+            limpar_buffer();
             printf(RED "\n✗ Opção inválida!\n" RESET);
             continue;
         }
-        limpar_buffer_input();
+        limpar_buffer();
         
         switch (opcao) {
             case 1: {
@@ -183,10 +208,13 @@ void menu_principal() {
             
             case 6: {
                 // Exportar
-                printf(YELLOW "\n[Exportação - Em desenvolvimento]\n" RESET);
-                printf("Formatos disponíveis: CSV, JSON, Excel, PDF\n");
-                printf("Pressione ENTER para continuar...");
-                getchar();
+                if (!formAtual) {
+                    printf(RED "\n✗ Nenhum formulário aberto!\n" RESET);
+                } else {
+                    RecordSet *recordset = preparar_recordset(formAtual, 0);
+                    menu_exportar(formAtual, recordset);
+                    liberar_recordset(recordset);
+                }
                 break;
             }
             
