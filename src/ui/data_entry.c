@@ -3,23 +3,12 @@
 #include "../core/field.h"
 #include "../core/record.h"
 #include "../utils/colors.h"
+#include "../utils/ui_utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-
-static void limpar_buffer() {
-    int c;
-    while ((c = getchar()) != '\n' && c != EOF);
-}
-
-static void limpar_tela() {
-    #ifdef _WIN32
-        system("cls");
-    #else
-        system("clear");
-    #endif
-}
+#include <errno.h>
 
 static void exibir_campo_info(Field *field) {
     printf(BOLD_CYAN "\n%s" RESET, field->label);
@@ -68,8 +57,7 @@ static bool ler_valor_campo(Field *field, char *value, size_t maxLen) {
     // Para campos booleanos, simplifica
     if (field->type == FIELD_BOOLEAN) {
         printf("(s/n): ");
-        char resposta = getchar();
-        limpar_buffer();
+        char resposta = ler_confirmacao();
         
         if (resposta == 's' || resposta == 'S') {
             strcpy(value, "Sim");
@@ -85,7 +73,7 @@ static bool ler_valor_campo(Field *field, char *value, size_t maxLen) {
     if (field->type == FIELD_CHOICE_SINGLE && field->choices) {
         printf("Digite o número da opção: ");
         int opcao;
-        if (scanf("%d", &opcao) != 1) {
+        if (!ler_int_seguro(&opcao)) {
             limpar_buffer();
             return false;
         }
@@ -104,7 +92,7 @@ static bool ler_valor_campo(Field *field, char *value, size_t maxLen) {
     if (field->type == FIELD_RATING) {
         printf("Avaliação (1-5 estrelas): ");
         int rating;
-        if (scanf("%d", &rating) != 1 || rating < 1 || rating > 5) {
+        if (!ler_int_seguro(&rating) || rating < 1 || rating > 5) {
             limpar_buffer();
             printf(RED "Use valores entre 1 e 5\n" RESET);
             return false;
@@ -115,11 +103,9 @@ static bool ler_valor_campo(Field *field, char *value, size_t maxLen) {
     }
     
     // Para outros tipos, leitura normal
-    if (!fgets(value, maxLen, stdin)) {
+    if (!ler_string_segura(value, maxLen)) {
         return false;
     }
-    
-    value[strcspn(value, "\n")] = '\0';
     
     // Se vazio e tem valor padrão, usa o padrão
     if (strlen(value) == 0 && field->defaultValue[0]) {
@@ -195,8 +181,7 @@ bool cadastrar_registro_interativo(Form *form, RecordSet *recordset) {
             printf(RED "\nLimite de tentativas atingido para campo '%s'\n" RESET, 
                    field->label);
             printf("Deseja continuar mesmo assim? (s/n): ");
-            char resp = getchar();
-            limpar_buffer();
+            char resp = ler_confirmacao();
             
             if (resp != 's' && resp != 'S') {
                 liberar_registro(record);
@@ -227,7 +212,7 @@ bool cadastrar_registro_interativo(Form *form, RecordSet *recordset) {
     }
     
     printf("\nPressione ENTER para continuar...");
-    getchar();
+    limpar_buffer();
     
     return sucesso;
 }
@@ -235,72 +220,72 @@ bool cadastrar_registro_interativo(Form *form, RecordSet *recordset) {
 void visualizar_registros(RecordSet *recordset) {
     if (!recordset || !recordset->form) return;
     
-    limpar_tela();
-    
     Form *form = recordset->form;
     
-    printf(BOLD_CYAN "╔════════════════════════════════════════════════════╗\n" RESET);
-    printf(BOLD_CYAN "║          REGISTROS CADASTRADOS                     ║\n" RESET);
-    printf(BOLD_CYAN "╚════════════════════════════════════════════════════╝\n" RESET);
-    
-    printf(GREEN "\nFormulário: %s\n" RESET, form->displayName);
-    printf(GREEN "Total de registros: %d\n" RESET, recordset->numRecords);
-    
-    if (recordset->numRecords == 0) {
-        printf(YELLOW "\nNenhum registro cadastrado ainda.\n" RESET);
-        printf("\nPressione ENTER para continuar...");
-        getchar();
-        return;
-    }
-    
-    printf("\n");
-    
-    // Exibe cada registro
-    for (int i = 0; i < recordset->numRecords; i++) {
-        Record *record = recordset->records[i];
+    while (1) {
+        limpar_tela();
+        desenhar_cabecalho("REGISTROS CADASTRADOS");
         
-        printf(CYAN "────────────────────────────────────────────────────────\n" RESET);
-        printf(BOLD_WHITE "Registro #%d\n" RESET, record->id);
-        printf(CYAN "────────────────────────────────────────────────────────\n" RESET);
+        printf(GREEN "\nFormulário: %s\n" RESET, form->displayName);
+        printf(GREEN "Total de registros: %d\n" RESET, recordset->numRecords);
         
-        for (int j = 0; j < form->numFields; j++) {
-            Field *field = form->fields[j];
-            const char *value = obter_valor_campo(record, field->id);
+        if (recordset->numRecords == 0) {
+            printf(YELLOW "\nNenhum registro cadastrado ainda.\n" RESET);
+            printf("\nPressione ENTER para continuar...");
+            if (esperar_enter_check_resize()) continue;
+            return;
+        }
+        
+        printf("\n");
+        
+        // Exibe cada registro
+        for (int i = 0; i < recordset->numRecords; i++) {
+            Record *record = recordset->records[i];
             
-            printf(GREEN "%-25s: " RESET, field->label);
+            desenhar_separador();
+            printf(BOLD_WHITE "Registro #%d\n" RESET, record->id);
+            desenhar_separador();
             
-            if (value && value[0]) {
-                // Formatação especial para alguns tipos
-                if (field->type == FIELD_RATING) {
-                    int rating = atoi(value);
-                    for (int k = 0; k < 5; k++) {
-                        printf(k < rating ? "★" : "☆");
-                    }
-                    printf(" (%s/5)", value);
-                } else if (field->type == FIELD_BOOLEAN) {
-                    if (strcmp(value, "Sim") == 0 || strcmp(value, "1") == 0) {
-                        printf(GREEN "✓ Sim" RESET);
+            for (int j = 0; j < form->numFields; j++) {
+                Field *field = form->fields[j];
+                const char *value = obter_valor_campo(record, field->id);
+                
+                printf(GREEN "%-25s: " RESET, field->label);
+                
+                if (value && value[0]) {
+                    // Formatação especial para alguns tipos
+                    if (field->type == FIELD_RATING) {
+                        int rating = atoi(value);
+                        for (int k = 0; k < 5; k++) {
+                            printf(k < rating ? "★" : "☆");
+                        }
+                        printf(" (%s/5)", value);
+                    } else if (field->type == FIELD_BOOLEAN) {
+                        if (strcmp(value, "Sim") == 0 || strcmp(value, "1") == 0) {
+                            printf(GREEN "✓ Sim" RESET);
+                        } else {
+                            printf(RED "✗ Não" RESET);
+                        }
+                    } else if (field->type == FIELD_MONEY) {
+                        printf("R$ %s", value);
                     } else {
-                        printf(RED "✗ Não" RESET);
+                        printf("%s", value);
                     }
-                } else if (field->type == FIELD_MONEY) {
-                    printf("R$ %s", value);
                 } else {
-                    printf("%s", value);
+                    printf(DIM "(vazio)" RESET);
                 }
-            } else {
-                printf(DIM "(vazio)" RESET);
+                
+                printf("\n");
             }
             
             printf("\n");
         }
         
-        printf("\n");
+        desenhar_separador();
+        printf("\nPressione ENTER para continuar...");
+        if (esperar_enter_check_resize()) continue;
+        break;
     }
-    
-    printf(CYAN "════════════════════════════════════════════════════════\n" RESET);
-    printf("\nPressione ENTER para continuar...");
-    getchar();
 }
 
 void menu_cadastro(Form *form, RecordSet *recordset) {
@@ -310,24 +295,29 @@ void menu_cadastro(Form *form, RecordSet *recordset) {
     
     do {
         limpar_tela();
-        
-        printf(BOLD_CYAN "╔════════════════════════════════════════════════════╗\n" RESET);
-        printf(BOLD_CYAN "║          MENU DE CADASTRO                          ║\n" RESET);
-        printf(BOLD_CYAN "╚════════════════════════════════════════════════════╝\n" RESET);
+        desenhar_cabecalho("MENU DE CADASTRO");
         
         printf(GREEN "\nFormulário: %s\n" RESET, form->displayName);
         printf(GREEN "Registros cadastrados: %d\n" RESET, recordset->numRecords);
         
-        printf(CYAN "\n────────────────────────────────────────────────────────\n" RESET);
+        printf("\n");
+        desenhar_separador();
         printf("1. Cadastrar novo registro\n");
         printf("2. Ver todos os registros\n");
         printf("3. Salvar em CSV\n");
         printf("4. Exportar JSON\n");
         printf("0. Voltar\n");
-        printf(CYAN "────────────────────────────────────────────────────────\n" RESET);
+        desenhar_separador();
         
         printf("\nEscolha: ");
-        if (scanf("%d", &opcao) != 1) {
+        
+        // Lógica de responsividade (igual ao menu principal)
+        int result = scanf("%d", &opcao);
+        if (result == EOF && errno == EINTR) {
+            continue; // Redesenha a tela
+        }
+        
+        if (result != 1) {
             limpar_buffer();
             printf(RED "Opção inválida!\n" RESET);
             continue;
@@ -354,7 +344,7 @@ void menu_cadastro(Form *form, RecordSet *recordset) {
                 }
                 
                 printf("Pressione ENTER para continuar...");
-                getchar();
+                limpar_buffer();
                 break;
             }
                 
@@ -369,7 +359,7 @@ void menu_cadastro(Form *form, RecordSet *recordset) {
                 }
                 
                 printf("Pressione ENTER para continuar...");
-                getchar();
+                limpar_buffer();
                 break;
             }
                 
@@ -379,7 +369,7 @@ void menu_cadastro(Form *form, RecordSet *recordset) {
             default:
                 printf(RED "Opção inválida!\n" RESET);
                 printf("Pressione ENTER para continuar...");
-                getchar();
+                limpar_buffer();
         }
         
     } while (opcao != 0);

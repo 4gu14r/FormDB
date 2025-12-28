@@ -13,10 +13,10 @@ NC = \033[0m # No Color
 
 # Arquivos fonte
 CORE_SRC = $(SRC_DIR)/core/field.c $(SRC_DIR)/core/form.c $(SRC_DIR)/core/record.c
-UI_SRC = $(SRC_DIR)/ui/form_builder.c $(SRC_DIR)/ui/data_entry.c $(SRC_DIR)/ui/form_browser.c
-STORAGE_SRC = $(SRC_DIR)/storage/csv_handler.c
+UI_SRC = $(SRC_DIR)/ui/form_builder.c $(SRC_DIR)/ui/data_entry.c $(SRC_DIR)/ui/form_browser.c $(SRC_DIR)/ui/exporter.c
+STORAGE_SRC = $(SRC_DIR)/storage/csv_handler.c $(SRC_DIR)/storage/json_handler.c
 SEARCH_SRC = $(SRC_DIR)/search/search.c
-UTILS_SRC = $(SRC_DIR)/utils/string_utils.c $(SRC_DIR)/utils/input_utils.c
+UTILS_SRC = $(SRC_DIR)/utils/string_utils.c $(SRC_DIR)/utils/input_utils.c $(SRC_DIR)/utils/ui_utils.c
 MAIN_SRC = $(SRC_DIR)/main.c
 
 ALL_SRC = $(CORE_SRC) $(UI_SRC) $(STORAGE_SRC) $(SEARCH_SRC) $(UTILS_SRC) $(MAIN_SRC)

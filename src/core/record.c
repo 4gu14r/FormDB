@@ -1,35 +1,39 @@
 #include "record.h"
-#include "field.h"
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include <time.h>
+#include <stdlib.h>
+#include <stdio.h>
+
+// --- Funções de Registro ---
 
 Record* criar_registro(Form *form, int recordId) {
     if (!form) return NULL;
     
-    Record *record = malloc(sizeof(Record));
+    Record *record = (Record*) malloc(sizeof(Record));
     if (!record) return NULL;
     
     record->id = recordId;
     record->formId = form->id;
-    record->numValues = form->numFields;
     record->createdAt = time(NULL);
     record->modifiedAt = time(NULL);
-    record->createdBy[0] = '\0';
-    record->modifiedBy[0] = '\0';
+    record->numValues = 0;
+    record->values = NULL;
     
-    // Aloca array de valores
-    record->values = malloc(form->numFields * sizeof(FieldValue));
-    
-    // Inicializa valores com defaults ou vazio
-    for (int i = 0; i < form->numFields; i++) {
-        record->values[i].fieldId = form->fields[i]->id;
-        
-        if (form->fields[i]->defaultValue[0]) {
-            strncpy(record->values[i].value, form->fields[i]->defaultValue, MAX_VALUE_LENGTH - 1);
-        } else {
-            record->values[i].value[0] = '\0';
+    // Alocar espaço para valores baseado nos campos do formulário
+    if (form->numFields > 0) {
+        record->values = (FieldValue*) malloc(sizeof(FieldValue) * form->numFields);
+        if (record->values) {
+            record->numValues = form->numFields;
+            // Inicializar valores
+            for (int i = 0; i < form->numFields; i++) {
+                record->values[i].fieldId = form->fields[i]->id;
+                strcpy(record->values[i].value, "");
+                
+                // Se tiver valor padrão
+                if (strlen(form->fields[i]->defaultValue) > 0) {
+                    strncpy(record->values[i].value, form->fields[i]->defaultValue, MAX_VALUE_LENGTH - 1);
+                    record->values[i].value[MAX_VALUE_LENGTH - 1] = '\0';
+                }
+            }
         }
     }
     
@@ -38,16 +42,14 @@ Record* criar_registro(Form *form, int recordId) {
 
 void liberar_registro(Record *record) {
     if (!record) return;
-    
     if (record->values) {
         free(record->values);
     }
-    
     free(record);
 }
 
 bool definir_valor_campo(Record *record, int fieldId, const char *value) {
-    if (!record || !value) return false;
+    if (!record || !record->values || !value) return false;
     
     for (int i = 0; i < record->numValues; i++) {
         if (record->values[i].fieldId == fieldId) {
@@ -57,80 +59,80 @@ bool definir_valor_campo(Record *record, int fieldId, const char *value) {
             return true;
         }
     }
-    
     return false;
 }
 
 const char* obter_valor_campo(Record *record, int fieldId) {
-    if (!record) return NULL;
+    if (!record || !record->values) return "";
     
     for (int i = 0; i < record->numValues; i++) {
         if (record->values[i].fieldId == fieldId) {
             return record->values[i].value;
         }
     }
-    
-    return NULL;
+    return "";
 }
 
 bool validar_registro(Record *record, Form *form, char *errorMsg) {
-    if (!record || !form) {
-        strcpy(errorMsg, "Registro ou formulário inválido");
-        return false;
-    }
+    if (!record || !form) return false;
     
-    // Valida cada campo
     for (int i = 0; i < form->numFields; i++) {
         Field *field = form->fields[i];
-        const char *value = obter_valor_campo(record, field->id);
+        const char *val = obter_valor_campo(record, field->id);
         
-        if (!validar_valor_campo(field, value, errorMsg)) {
+        // Validação de obrigatório
+        if (field->validation.required && strlen(val) == 0) {
+            if (errorMsg) sprintf(errorMsg, "Campo '%s' é obrigatório.", field->label);
             return false;
         }
     }
-    
     return true;
 }
 
-// ========== RECORDSET ==========
+// --- Funções de RecordSet ---
 
 RecordSet* criar_recordset(Form *form) {
-    if (!form) return NULL;
+    RecordSet *rs = (RecordSet*) malloc(sizeof(RecordSet));
+    if (!rs) return NULL;
     
-    RecordSet *recordset = malloc(sizeof(RecordSet));
-    if (!recordset) return NULL;
+    rs->form = form;
+    rs->numRecords = 0;
+    rs->capacity = 10;
+    rs->records = (Record**) malloc(sizeof(Record*) * rs->capacity);
     
-    recordset->form = form;
-    recordset->numRecords = 0;
-    recordset->capacity = 10;
-    recordset->records = malloc(recordset->capacity * sizeof(Record*));
+    if (!rs->records) {
+        free(rs);
+        return NULL;
+    }
     
-    return recordset;
+    return rs;
 }
 
 void liberar_recordset(RecordSet *recordset) {
     if (!recordset) return;
     
-    for (int i = 0; i < recordset->numRecords; i++) {
-        liberar_registro(recordset->records[i]);
+    if (recordset->records) {
+        for (int i = 0; i < recordset->numRecords; i++) {
+            liberar_registro(recordset->records[i]);
+        }
+        free(recordset->records);
     }
-    
-    free(recordset->records);
     free(recordset);
 }
 
 bool adicionar_registro(RecordSet *recordset, Record *record) {
     if (!recordset || !record) return false;
     
-    // Expande array se necessário
     if (recordset->numRecords >= recordset->capacity) {
-        recordset->capacity *= 2;
-        recordset->records = realloc(recordset->records, recordset->capacity * sizeof(Record*));
+        int newCapacity = recordset->capacity * 2;
+        Record **newRecords = (Record**) realloc(recordset->records, sizeof(Record*) * newCapacity);
+        if (!newRecords) return false;
+        
+        recordset->records = newRecords;
+        recordset->capacity = newCapacity;
     }
     
     recordset->records[recordset->numRecords++] = record;
-    recordset->form->totalRecords = recordset->numRecords;
-    
     return true;
 }
 
@@ -141,17 +143,14 @@ bool remover_registro(RecordSet *recordset, int recordId) {
         if (recordset->records[i]->id == recordId) {
             liberar_registro(recordset->records[i]);
             
-            // Shift registros restantes
+            // Shift left
             for (int j = i; j < recordset->numRecords - 1; j++) {
-                recordset->records[j] = recordset->records[j + 1];
+                recordset->records[j] = recordset->records[j+1];
             }
-            
             recordset->numRecords--;
-            recordset->form->totalRecords = recordset->numRecords;
             return true;
         }
     }
-    
     return false;
 }
 
@@ -163,209 +162,25 @@ Record* buscar_registro_por_id(RecordSet *recordset, int recordId) {
             return recordset->records[i];
         }
     }
-    
     return NULL;
-}
-
-static int comparar_registros_por_campo(const void *a, const void *b, int fieldId, bool ascending) {
-    Record *r1 = *(Record**)a;
-    Record *r2 = *(Record**)b;
-    
-    const char *v1 = obter_valor_campo(r1, fieldId);
-    const char *v2 = obter_valor_campo(r2, fieldId);
-    
-    if (!v1) v1 = "";
-    if (!v2) v2 = "";
-    
-    int result = strcmp(v1, v2);
-    return ascending ? result : -result;
 }
 
 void ordenar_registros(RecordSet *recordset, int fieldId, bool ascending) {
     if (!recordset || recordset->numRecords < 2) return;
     
-    // Bubble sort simples (pode otimizar depois)
     for (int i = 0; i < recordset->numRecords - 1; i++) {
         for (int j = 0; j < recordset->numRecords - i - 1; j++) {
-            int cmp = comparar_registros_por_campo(
-                &recordset->records[j], 
-                &recordset->records[j + 1], 
-                fieldId, 
-                ascending
-            );
+            const char *val1 = obter_valor_campo(recordset->records[j], fieldId);
+            const char *val2 = obter_valor_campo(recordset->records[j+1], fieldId);
             
-            if (cmp > 0) {
-                // Troca
+            int cmp = strcmp(val1, val2);
+            bool swap = ascending ? (cmp > 0) : (cmp < 0);
+            
+            if (swap) {
                 Record *temp = recordset->records[j];
-                recordset->records[j] = recordset->records[j + 1];
-                recordset->records[j + 1] = temp;
+                recordset->records[j] = recordset->records[j+1];
+                recordset->records[j+1] = temp;
             }
         }
     }
-}
-
-// ========== PERSISTÊNCIA CSV ==========
-
-bool salvar_registros_csv(RecordSet *recordset, const char *filepath) {
-    if (!recordset || !filepath) return false;
-    
-    FILE *f = fopen(filepath, "w");
-    if (!f) return false;
-    
-    Form *form = recordset->form;
-    
-    // Escreve cabeçalho
-    for (int i = 0; i < form->numFields; i++) {
-        fprintf(f, "%s", form->fields[i]->label);
-        if (i < form->numFields - 1) {
-            fprintf(f, ",");
-        }
-    }
-    fprintf(f, "\n");
-    
-    // Escreve registros
-    for (int i = 0; i < recordset->numRecords; i++) {
-        Record *record = recordset->records[i];
-        
-        for (int j = 0; j < form->numFields; j++) {
-            const char *value = obter_valor_campo(record, form->fields[j]->id);
-            
-            // Escapa vírgulas e aspas
-            if (value && (strchr(value, ',') || strchr(value, '"') || strchr(value, '\n'))) {
-                fprintf(f, "\"");
-                for (const char *p = value; *p; p++) {
-                    if (*p == '"') fprintf(f, "\"\"");
-                    else fprintf(f, "%c", *p);
-                }
-                fprintf(f, "\"");
-            } else {
-                fprintf(f, "%s", value ? value : "");
-            }
-            
-            if (j < form->numFields - 1) {
-                fprintf(f, ",");
-            }
-        }
-        fprintf(f, "\n");
-    }
-    
-    fclose(f);
-    return true;
-}
-
-RecordSet* carregar_registros_csv(Form *form, const char *filepath) {
-    if (!form || !filepath) return NULL;
-    
-    FILE *f = fopen(filepath, "r");
-    if (!f) return NULL;
-    
-    RecordSet *recordset = criar_recordset(form);
-    
-    char linha[4096];
-    
-    // Pula cabeçalho
-    fgets(linha, sizeof(linha), f);
-    
-    int recordId = 1;
-    
-    // Lê registros
-    while (fgets(linha, sizeof(linha), f)) {
-        linha[strcspn(linha, "\n")] = '\0';
-        
-        Record *record = criar_registro(form, recordId++);
-        
-        char *token = strtok(linha, ",");
-        int fieldIndex = 0;
-        
-        while (token && fieldIndex < form->numFields) {
-            // Remove aspas se houver
-            if (token[0] == '"') {
-                int len = strlen(token);
-                if (len > 1 && token[len - 1] == '"') {
-                    token[len - 1] = '\0';
-                    token++;
-                }
-            }
-            
-            definir_valor_campo(record, form->fields[fieldIndex]->id, token);
-            
-            token = strtok(NULL, ",");
-            fieldIndex++;
-        }
-        
-        adicionar_registro(recordset, record);
-    }
-    
-    fclose(f);
-    return recordset;
-}
-
-// ========== EXPORTAÇÃO JSON ==========
-
-bool exportar_json(RecordSet *recordset, const char *filepath) {
-    if (!recordset || !filepath) return false;
-    
-    FILE *f = fopen(filepath, "w");
-    if (!f) return false;
-    
-    Form *form = recordset->form;
-    
-    fprintf(f, "{\n");
-    fprintf(f, "  \"formulario\": \"%s\",\n", form->displayName);
-    fprintf(f, "  \"total\": %d,\n", recordset->numRecords);
-    fprintf(f, "  \"registros\": [\n");
-    
-    for (int i = 0; i < recordset->numRecords; i++) {
-        Record *record = recordset->records[i];
-        
-        fprintf(f, "    {\n");
-        fprintf(f, "      \"id\": %d,\n", record->id);
-        
-        for (int j = 0; j < form->numFields; j++) {
-            const char *value = obter_valor_campo(record, form->fields[j]->id);
-            
-            fprintf(f, "      \"%s\": ", form->fields[j]->name);
-            
-            // Escapa JSON
-            if (value) {
-                fprintf(f, "\"");
-                for (const char *p = value; *p; p++) {
-                    if (*p == '"') fprintf(f, "\\\"");
-                    else if (*p == '\\') fprintf(f, "\\\\");
-                    else if (*p == '\n') fprintf(f, "\\n");
-                    else fprintf(f, "%c", *p);
-                }
-                fprintf(f, "\"");
-            } else {
-                fprintf(f, "null");
-            }
-            
-            if (j < form->numFields - 1) {
-                fprintf(f, ",\n");
-            } else {
-                fprintf(f, "\n");
-            }
-        }
-        
-        fprintf(f, "    }");
-        if (i < recordset->numRecords - 1) {
-            fprintf(f, ",\n");
-        } else {
-            fprintf(f, "\n");
-        }
-    }
-    
-    fprintf(f, "  ]\n");
-    fprintf(f, "}\n");
-    
-    fclose(f);
-    return true;
-}
-
-// ========== EXPORTAÇÃO EXCEL (CSV com codificação) ==========
-
-bool exportar_excel(RecordSet *recordset, const char *filepath) {
-    // Por enquanto, usa o mesmo formato CSV
-    // Futuramente pode adicionar suporte a .xlsx via biblioteca externa
-    return salvar_registros_csv(recordset, filepath);
 }
