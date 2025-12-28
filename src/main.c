@@ -98,6 +98,7 @@ void menu_principal() {
         limpar_tela(); // Limpa a tela a cada iteração para redesenhar corretamente
         desenhar_cabecalho("MENU PRINCIPAL");
         
+        printf(CYAN "   " RESET "0. " RED "🚪 Sair\n" RESET);
         printf(CYAN "   " RESET "1. " GREEN "📝 Criar Novo Formulário\n" RESET);
         printf(CYAN "   " RESET "2. " GREEN "📋 Abrir Formulário Existente\n" RESET);
         printf(CYAN "   " RESET "3. " GREEN "✏️  Cadastrar Dados\n" RESET);
@@ -107,8 +108,7 @@ void menu_principal() {
         printf(CYAN "   " RESET "7. " GREEN "📥 Importar Dados\n" RESET);
         printf(CYAN "   " RESET "8. " GREEN "📈 Relatórios e Estatísticas\n" RESET);
         printf(CYAN "   " RESET "9. " GREEN "🗂️  Gerenciar Formulários\n" RESET);
-        printf(CYAN "   " RESET "10." GREEN " 💾 Templates Prontos\n" RESET);
-        printf(CYAN "   " RESET "0. " RED "🚪 Sair\n" RESET);
+        printf(CYAN "   " RESET "10." GREEN "💾 Templates Prontos\n" RESET);
         
         // Linha de rodapé simples para fechar visualmente se quiser, 
         // ou apenas deixar o cabeçalho como título.

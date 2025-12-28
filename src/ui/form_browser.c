@@ -5,11 +5,13 @@
 #include "form_browser.h"
 #include "../utils/colors.h"
 #include "../utils/ui_utils.h"
+#include "../utils/file_utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
 #include <unistd.h> // Para access()
+#include <ctype.h>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -80,10 +82,11 @@ Form* selecionar_formulario_interativo() {
         strcat(filename, ".form");
     }
     
+    // Usa a função utilitária para encontrar o arquivo correto
     char filepath[300];
-    snprintf(filepath, sizeof(filepath), "data/forms/%s", filename);
+    bool encontrado = encontrar_arquivo_case_insensitive("data/forms", filename, filepath, sizeof(filepath));
     
-    if (access(filepath, F_OK) != -1) {
+    if (encontrado) {
         Form *form = carregar_formulario(filepath);
         if (form) {
             printf(GREEN "\n✓ Formulário '%s' carregado com sucesso!\n" RESET, form->displayName);
