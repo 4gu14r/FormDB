@@ -48,7 +48,6 @@ void visualizar_lista_registros(RecordSet *recordset, const char *titulo, const 
             
             desenhar_separador();
             printf(BOLD_WHITE "Registro #%d\n" RESET, record->id);
-            desenhar_separador();
             
             for (int j = 0; j < form->numFields; j++) {
                 Field *field = form->fields[j];
@@ -81,8 +80,6 @@ void visualizar_lista_registros(RecordSet *recordset, const char *titulo, const 
                 
                 printf("\n");
             }
-            
-            printf("\n");
         }
         
         desenhar_separador();
