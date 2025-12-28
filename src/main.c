@@ -2,11 +2,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <dirent.h>
+#include <unistd.h>
 #include "core/form.h"
 #include "core/field.h"
 #include "core/record.h"
 #include "ui/form_builder.h"
 #include "ui/data_entry.h"
+#include "ui/form_browser.h"
 #include "utils/colors.h"
 
 void criar_diretorios() {
@@ -52,14 +55,21 @@ void limpar_buffer_input() {
     while ((c = getchar()) != '\n' && c != EOF);
 }
 
-void listar_formularios() {
-    printf(BOLD_CYAN "\n╔════════════════════════════════════════════════╗\n" RESET);
-    printf(BOLD_CYAN "║          FORMULÁRIOS CADASTRADOS               ║\n" RESET);
-    printf(BOLD_CYAN "╚════════════════════════════════════════════════╝\n" RESET);
+RecordSet* preparar_recordset(Form *form, int exibir_mensagem) {
+    RecordSet *recordset = criar_recordset(form);
     
-    // TODO: Implementar leitura de diretório data/forms/
-    printf("\n" YELLOW "Nenhum formulário cadastrado ainda.\n" RESET);
-    printf(GREEN "Crie seu primeiro formulário na opção 1!\n" RESET);
+    char filepath[300];
+    snprintf(filepath, sizeof(filepath), "data/records/%s.csv", form->name);
+    
+    RecordSet *loaded = carregar_registros_csv(form, filepath);
+    if (loaded) {
+        liberar_recordset(recordset);
+        if (exibir_mensagem) {
+            printf(GREEN "\n✓ Dados carregados de %s\n" RESET, filepath);
+        }
+        return loaded;
+    }
+    return recordset;
 }
 
 void menu_principal() {
@@ -104,6 +114,9 @@ void menu_principal() {
         switch (opcao) {
             case 1: {
                 // Criar novo formulário
+                if (formAtual) {
+                    liberar_formulario(formAtual);
+                }
                 Form *novoForm = construir_formulario_interativo();
                 if (novoForm) {
                     formAtual = novoForm;
@@ -114,10 +127,13 @@ void menu_principal() {
             
             case 2: {
                 // Abrir formulário existente
-                listar_formularios();
-                printf(YELLOW "\n[Em desenvolvimento]\n" RESET);
-                printf("Pressione ENTER para continuar...");
-                getchar();
+                Form *novoForm = selecionar_formulario_interativo();
+                if (novoForm) {
+                    if (formAtual) {
+                        liberar_formulario(formAtual);
+                    }
+                    formAtual = novoForm;
+                }
                 break;
             }
             
@@ -127,19 +143,7 @@ void menu_principal() {
                     printf(RED "\n✗ Nenhum formulário aberto!\n" RESET);
                     printf("Crie ou abra um formulário primeiro.\n");
                 } else {
-                    // Cria ou carrega recordset
-                    RecordSet *recordset = criar_recordset(formAtual);
-                    
-                    // Tenta carregar dados existentes
-                    char filepath[300];
-                    snprintf(filepath, sizeof(filepath), "data/records/%s.csv", formAtual->name);
-                    
-                    RecordSet *loaded = carregar_registros_csv(formAtual, filepath);
-                    if (loaded) {
-                        liberar_recordset(recordset);
-                        recordset = loaded;
-                        printf(GREEN "\n✓ Dados carregados de %s\n" RESET, filepath);
-                    }
+                    RecordSet *recordset = preparar_recordset(formAtual, 1);
                     
                     menu_cadastro(formAtual, recordset);
                     
@@ -153,16 +157,7 @@ void menu_principal() {
                 if (!formAtual) {
                     printf(RED "\n✗ Nenhum formulário aberto!\n" RESET);
                 } else {
-                    RecordSet *recordset = criar_recordset(formAtual);
-                    
-                    char filepath[300];
-                    snprintf(filepath, sizeof(filepath), "data/records/%s.csv", formAtual->name);
-                    
-                    RecordSet *loaded = carregar_registros_csv(formAtual, filepath);
-                    if (loaded) {
-                        liberar_recordset(recordset);
-                        recordset = loaded;
-                    }
+                    RecordSet *recordset = preparar_recordset(formAtual, 0);
                     
                     visualizar_registros(recordset);
                     
