@@ -19,12 +19,12 @@ static void criar_dir(const char *path) {
 
 int inicializar_app_context(void) {
 #ifdef _WIN32
-    snprintf(APP.base, sizeof(APP.base), ".\\tools");
+    snprintf(APP.base, sizeof(APP.base), "..\\tools");
     // ...
 
     const char *sep = "\\";
 #else
-    snprintf(APP.base, sizeof(APP.base), "./tools");
+    snprintf(APP.base, sizeof(APP.base), "../tools");
     const char *sep = "/";
 #endif
 
