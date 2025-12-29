@@ -1,4 +1,4 @@
-name: Build EXE on Windows
+name: Build + Installer (Windows)
 
 on:
   push:
@@ -22,13 +22,25 @@ jobs:
           gcc
           make
 
-    - name: Compilar projeto (make)
+    - name: Compilar projeto
       shell: msys2 {0}
       run: |
         make
 
-    - name: Salvar EXE como artefato
+    - name: Copiar DLL necessária (msys-2.0.dll)
+      shell: msys2 {0}
+      run: |
+        cp /usr/bin/msys-2.0.dll bin/
+
+    - name: Instalar Inno Setup
+      run: choco install innosetup -y
+
+    - name: Criar instalador
+      run: |
+        iscc installer\formdb.iss
+
+    - name: Salvar instalador como artefato
       uses: actions/upload-artifact@v4
       with:
-        name: app-windows
-        path: bin/formdb.exe
+        name: formdb-installer
+        path: dist/FormDB-Setup.exe
