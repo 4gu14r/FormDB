@@ -13,14 +13,15 @@ jobs:
     - name: Checkout código
       uses: actions/checkout@v3
 
-    - name: Instalar MinGW (gcc + make)
+    - name: Instalar MSYS2 (gcc + make + regex)
       uses: msys2/setup-msys2@v2
       with:
-        msystem: MINGW64
+        msystem: MSYS
         update: true
         install: >
-          mingw-w64-x86_64-gcc
+          gcc
           make
+          libtre
 
     - name: Compilar projeto (make)
       shell: msys2 {0}
