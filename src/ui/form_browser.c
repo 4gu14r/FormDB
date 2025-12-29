@@ -97,14 +97,26 @@ Form* selecionar_formulario_interativo() {
             #endif
             return form;
         } else {
-            printf(RED "\n✗ Erro ao carregar formulário!\n" RESET);
+            while(1) {
+                limpar_tela();
+                desenhar_cabecalho("ERRO");
+                printf(RED "\n✗ Erro ao carregar formulário!\n" RESET);
+                printf("\nPressione ENTER para continuar...");
+                if (esperar_enter_check_resize()) continue;
+                break;
+            }
         }
     } else {
-        printf(RED "\n✗ Arquivo não encontrado: %s\n" RESET, filepath);
+        while(1) {
+            limpar_tela();
+            desenhar_cabecalho("FORMULÁRIOS CADASTRADOS");
+            printf("%s", list_buffer);
+            printf(RED "\n✗ Arquivo não encontrado: %s\n" RESET, filepath);
+            printf("\nPressione ENTER para continuar...");
+            if (esperar_enter_check_resize()) continue;
+            break;
+        }
     }
-    
-    printf("\nPressione ENTER para continuar...");
-    limpar_buffer();
     
     return NULL; // Retorna NULL em caso de erro, o main mantém o form anterior se houver
 }
