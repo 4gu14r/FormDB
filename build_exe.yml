@@ -1,0 +1,35 @@
+name: Build Windows EXE
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch: # Permite rodar manualmente
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout do código
+      uses: actions/checkout@v4
+
+    - name: Configurar .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x' # Ajuste para a versão do seu projeto (ex: 6.0, 7.0, 8.0)
+
+    - name: Restaurar dependências
+      run: dotnet restore
+
+    - name: Publicar EXE
+      # Gera um executável único (SingleFile) para Windows x64 e copia os templates
+      run: |
+        dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o ./dist
+        Copy-Item -Path "templates" -Destination "./dist/templates" -Recurse
+
+    - name: Upload do Executável
+      uses: actions/upload-artifact@v4
+      with:
+        name: FormDB-Windows-App
+        path: dist
+        if-no-files-found: error

@@ -1,0 +1,39 @@
+name: Build EXE on Windows
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout código
+      uses: actions/checkout@v3
+
+    - name: Instalar MinGW (gcc + make)
+      uses: msys2/setup-msys2@v2
+      with:
+        msystem: MINGW64
+        update: true
+        install: >
+          mingw-w64-x86_64-gcc
+          mingw-w64-x86_64-make
+
+    - name: Compilar projeto (make)
+      shell: msys2 {0}
+      run: |
+        make
+
+    - name: Gerar .exe
+      shell: msys2 {0}
+      run: |
+        cp bin/formdb bin/formdb.exe
+
+    - name: Salvar EXE como artefato
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-windows
+        path: bin/formdb.exe
