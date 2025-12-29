@@ -98,18 +98,18 @@
 **form.c:**
 ```c
 ✅ criar_formulario()
-⚠️ salvar_formulario()        // Serializar para arquivo
-⚠️ carregar_formulario()      // Deserializar de arquivo
-⚠️ exibir_estrutura_formulario()
+✅ salvar_formulario()        // Serializar para arquivo
+✅ carregar_formulario()      // Deserializar de arquivo
+✅ exibir_estrutura_formulario()
 ⚠️ liberar_formulario()
 ```
 
 **record.c:**
 ```c
-⚠️ criar_registro()           // Criar registro vazio
-⚠️ definir_valor_campo()      // Setar valor
-⚠️ obter_valor_campo()        // Pegar valor
-⚠️ validar_registro()         // Validar todos os campos
+✅ criar_registro()           // Criar registro vazio
+✅ definir_valor_campo()      // Setar valor
+✅ obter_valor_campo()        // Pegar valor
+✅ validar_registro()         // Validar todos os campos
 ⚠️ criar_recordset()
 ⚠️ adicionar_registro()
 ```
