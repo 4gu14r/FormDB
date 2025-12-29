@@ -260,29 +260,13 @@ void menu_principal() {
             
             case 10: {
                 // Templates
-                printf(BOLD_CYAN "\n╔════════════════════════════════════════════════╗\n" RESET);
-                printf(BOLD_CYAN "║          TEMPLATES DISPONÍVEIS                 ║\n" RESET);
-                printf(BOLD_CYAN "╚════════════════════════════════════════════════╝\n" RESET);
-                printf("\n" GREEN "Negócios:\n" RESET);
-                printf("  • Controle de Estoque/Produtos\n");
-                printf("  • Cadastro de Clientes\n");
-                printf("  • Pedidos e Vendas\n");
-                printf("  • Fornecedores\n");
-                printf("\n" GREEN "Saúde:\n" RESET);
-                printf("  • Pacientes\n");
-                printf("  • Consultas\n");
-                printf("  • Animais (Veterinária)\n");
-                printf("\n" GREEN "Educação:\n" RESET);
-                printf("  • Alunos\n");
-                printf("  • Professores\n");
-                printf("  • Cursos\n");
-                printf("\n" GREEN "Pessoal:\n" RESET);
-                printf("  • Contatos\n");
-                printf("  • Tarefas\n");
-                printf("  • Finanças Pessoais\n");
-                printf("\n" YELLOW "[Implementação em desenvolvimento]\n" RESET);
-                printf("Pressione ENTER para continuar...");
-                getchar();
+                Form *novoForm = selecionar_template();
+                if (novoForm) {
+                    if (formAtual) {
+                        liberar_formulario(formAtual);
+                    }
+                    formAtual = novoForm;
+                }
                 break;
             }
             

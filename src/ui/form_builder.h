@@ -19,4 +19,7 @@ void configurar_validacao(Field *field);
 // Adiciona opções para campos de escolha
 void adicionar_opcoes_escolha(Field *field);
 
+// Exibe menu de templates e cria o formulário selecionado
+Form* selecionar_template();
+
 #endif
