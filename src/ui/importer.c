@@ -9,6 +9,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <sys/stat.h>
+#include <errno.h>
+
+#ifdef _WIN32
+    #include <direct.h>
+    #define MKDIR(path) _mkdir(path)
+#else
+    #define MKDIR(path) mkdir(path, 0777)
+#endif
 
 // Protótipos de funções que assumimos existir no core/storage
 // Caso não existam, precisarão ser implementadas no record.c/csv_handler.c
@@ -19,6 +28,31 @@ static void trim_whitespace(char *str) {
     end = str + strlen(str) - 1;
     while(end > str && isspace((unsigned char)*end)) end--;
     *(end+1) = 0;
+}
+
+// Função auxiliar para limpar caminhos no estilo Windows (remove aspas e espaços)
+static void clean_path(char *path) {
+    if (!path) return;
+    
+    // Remove quebra de linha se houver
+    path[strcspn(path, "\n")] = 0;
+    
+    // Remove espaços em branco nas pontas
+    trim_whitespace(path);
+    
+    // Remove aspas duplas se existirem (comum no Windows "Copiar como caminho")
+    size_t len = strlen(path);
+    if (len >= 2 && path[0] == '"' && path[len-1] == '"') {
+        memmove(path, path + 1, len - 2);
+        path[len - 2] = '\0';
+    }
+}
+
+static void ensure_directory_exists(const char *path) {
+    struct stat st = {0};
+    if (stat(path, &st) == -1) {
+        MKDIR(path);
+    }
 }
 
 // Parser simples de linha CSV que respeita aspas
@@ -91,11 +125,14 @@ void processar_importacao(Form *form) {
         form->displayName);
 
     if (!ler_texto_dialogo("IMPORTAR DADOS", prompt, filepath, sizeof(filepath))) return;
+    
+    // Limpa o caminho (remove aspas do Windows e espaços)
+    clean_path(filepath);
 
     FILE *file = fopen(filepath, "r");
     if (!file) {
         char msg[512];
-        snprintf(msg, sizeof(msg), RED "\n✗ Erro ao abrir arquivo: %s\n" RESET, filepath);
+        snprintf(msg, sizeof(msg), RED "\n✗ Erro ao abrir arquivo: %s\nVerifique se o caminho está correto ou se o arquivo não está aberto no Excel.\n" RESET, filepath);
         printf("%s", msg);
         printf("Pressione ENTER para continuar...");
         esperar_enter_check_resize();
@@ -167,6 +204,10 @@ void processar_importacao(Form *form) {
     }
 
     fclose(file);
+
+    // Garante que a estrutura de pastas existe antes de salvar
+    ensure_directory_exists("data");
+    ensure_directory_exists("data/records");
 
     // Salva o banco de dados atualizado
     if (salvar_registros_csv(rs, db_path)) {
