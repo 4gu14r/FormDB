@@ -13,7 +13,7 @@ jobs:
     - name: Checkout código
       uses: actions/checkout@v3
 
-    - name: Instalar MSYS2 (gcc + make + regex)
+    - name: Instalar MSYS2 (gcc + make)
       uses: msys2/setup-msys2@v2
       with:
         msystem: MSYS
@@ -21,17 +21,11 @@ jobs:
         install: >
           gcc
           make
-          libtre
 
     - name: Compilar projeto (make)
       shell: msys2 {0}
       run: |
         make
-
-    - name: Gerar .exe
-      shell: msys2 {0}
-      run: |
-        cp bin/formdb bin/formdb.exe
 
     - name: Salvar EXE como artefato
       uses: actions/upload-artifact@v4
