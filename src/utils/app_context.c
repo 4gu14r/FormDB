@@ -23,9 +23,9 @@ int inicializar_app_context(void) {
     if (len == 0 || len >= sizeof(APP.base)) {
         return 0;
     }
-    snprintf(APP.base + len, sizeof(APP.base) - len, "\\FormDB");
+    snprintf(APP.base + len, sizeof(APP.base) - len, "\\tools");
 #else
-    snprintf(APP.base, sizeof(APP.base), "./FormDB");
+    snprintf(APP.base, sizeof(APP.base), "./tools");
 #endif
 
     #pragma GCC diagnostic push

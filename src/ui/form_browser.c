@@ -1,5 +1,6 @@
 /* /workspaces/RegistroPessoas/src/ui/form_browser.c */
 // Habilita usleep (necessário com -std=c11)
+#define _XOPEN_SOURCE 600
 #define _DEFAULT_SOURCE
 
 #include "form_browser.h"

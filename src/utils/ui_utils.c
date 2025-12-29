@@ -86,12 +86,15 @@ int obter_largura_terminal() {
     #ifdef _WIN32
         CONSOLE_SCREEN_BUFFER_INFO csbi;
         int columns;
-        GetStdHandle(STD_OUTPUT_HANDLE, &csbi);
-        columns = csbi.srWindow.Right - csbi.srWindow.Left + 1;
+        if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi)) {
+            columns = csbi.srWindow.Right - csbi.srWindow.Left + 1;
+        } else {
+            columns = 80; // Valor padrão caso falhe
+        }
         return columns;
     #else
     struct winsize w;
-    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == -1) {
+    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == -1 || w.ws_col == 0) {
         return 80;
     }
     return w.ws_col;

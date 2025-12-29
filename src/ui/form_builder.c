@@ -1,3 +1,7 @@
+// Habilita extensões POSIX (necessário para realpath com -std=c11)
+#define _XOPEN_SOURCE 600
+#define _DEFAULT_SOURCE
+
 #include "form_builder.h"
 #include "../core/form.h"
 #include "../core/field.h"
@@ -311,8 +315,20 @@ Form* selecionar_template() {
     while(1) {
         char menu_text[4096] = "";
         
+        // Resolve caminho absoluto para orientar o usuário
+        char abs_path[1024] = {0};
+        #ifdef _WIN32
+            if (_fullpath(abs_path, APP.templates, sizeof(abs_path)) == NULL) strncpy(abs_path, APP.templates, sizeof(abs_path)-1);
+        #else
+            if (realpath(APP.templates, abs_path) == NULL) strncpy(abs_path, APP.templates, sizeof(abs_path)-1);
+        #endif
+
+        char msg[1200];
+        snprintf(msg, sizeof(msg), DIM "Local: " RESET BLUE "%s" RESET "\n" DIM "Adicione arquivos .json nesta pasta para aparecerem aqui.\n\n" RESET, abs_path);
+        strcat(menu_text, msg);
+
         if (count == 0) {
-            strcat(menu_text, YELLOW "Nenhum template encontrado na pasta 'templates/'.\n" RESET);
+            strcat(menu_text, YELLOW "Nenhum template encontrado'.\n" RESET);
         }
 
         for (int i = 0; i < count; i++) {
@@ -329,7 +345,12 @@ Form* selecionar_template() {
             snprintf(line, sizeof(line), "   %d. " GREEN "%s\n" RESET, i + 1, display);
             strcat(menu_text, line);
         }
+
+        desenhar_separador();
+        printf("\n");
         strcat(menu_text, "   0. " RED "Voltar\n" RESET);
+        printf("\n");
+        desenhar_separador();
         strcat(menu_text, "\nEscolha um template para criar: ");
         
         int opcao;
