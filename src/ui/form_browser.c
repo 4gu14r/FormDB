@@ -23,13 +23,15 @@
 static void obter_lista_formularios(char *buffer, size_t size) {
     buffer[0] = '\0';
     
-    // Resolve caminho absoluto para orientar o usuário
-    char abs_path[1024] = {0};
-    #ifdef _WIN32
-        if (_fullpath(abs_path, APP.forms, sizeof(abs_path)) == NULL) strncpy(abs_path, APP.forms, sizeof(abs_path)-1);
-    #else
-        if (realpath(APP.forms, abs_path) == NULL) strncpy(abs_path, APP.forms, sizeof(abs_path)-1);
-    #endif
+        // Resolve caminho absoluto para orientar o usuário
+        char abs_path[1024] = {0};
+        #ifdef _WIN32
+            // _fullpath converte ".\tools\..." para "C:\Program Files\..."
+            if (_fullpath(abs_path, APP.forms, sizeof(abs_path)) == NULL) strncpy(abs_path, APP.forms, sizeof(abs_path)-1);
+        #else
+            if (realpath(APP.forms, abs_path) == NULL) strncpy(abs_path, APP.forms, sizeof(abs_path)-1);
+        #endif
+    
 
     char msg[1200];
     snprintf(msg, sizeof(msg), DIM "Local: " RESET BLUE "%s" RESET "\n" DIM "Adicione arquivos .form nesta pasta para aparecerem aqui.\n" RESET, abs_path);
