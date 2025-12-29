@@ -19,11 +19,7 @@ static void criar_dir(const char *path) {
 
 int inicializar_app_context(void) {
 #ifdef _WIN32
-    DWORD len = GetEnvironmentVariableA("USERPROFILE", APP.base, sizeof(APP.base));
-    if (len == 0 || len >= sizeof(APP.base)) {
-        return 0;
-    }
-    snprintf(APP.base + len, sizeof(APP.base) - len, "\\tools");
+    snprintf(APP.base, sizeof(APP.base), ".\\tools");
 #else
     snprintf(APP.base, sizeof(APP.base), "./tools");
 #endif
