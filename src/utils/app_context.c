@@ -20,18 +20,22 @@ static void criar_dir(const char *path) {
 int inicializar_app_context(void) {
 #ifdef _WIN32
     snprintf(APP.base, sizeof(APP.base), ".\\tools");
+    // ...
+
+    const char *sep = "\\";
 #else
     snprintf(APP.base, sizeof(APP.base), "./tools");
+    const char *sep = "/";
 #endif
 
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wformat-truncation"
-    snprintf(APP.data, sizeof(APP.data), "%s/data", APP.base);
-    snprintf(APP.forms, sizeof(APP.forms), "%s/data/forms", APP.base);
-    snprintf(APP.records, sizeof(APP.records), "%s/data/records", APP.base);
-    snprintf(APP.exports, sizeof(APP.exports), "%s/exports", APP.base);
-    snprintf(APP.backups, sizeof(APP.backups), "%s/backups", APP.base);
-    snprintf(APP.templates, sizeof(APP.templates), "%s/templates", APP.base);
+    snprintf(APP.data, sizeof(APP.data), "%s%sdata", APP.base, sep);
+    snprintf(APP.forms, sizeof(APP.forms), "%s%sdata%sforms", APP.base, sep, sep);
+    snprintf(APP.records, sizeof(APP.records), "%s%sdata%srecords", APP.base, sep, sep);
+    snprintf(APP.exports, sizeof(APP.exports), "%s%sexports", APP.base, sep);
+    snprintf(APP.backups, sizeof(APP.backups), "%s%sbackups", APP.base, sep);
+    snprintf(APP.templates, sizeof(APP.templates), "%s%stemplates", APP.base, sep);
     #pragma GCC diagnostic pop
 
     criar_dir(APP.base);

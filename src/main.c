@@ -31,42 +31,6 @@
     #define MKDIR(path) mkdir(path, 0700)
 #endif
 
-void configurar_caminhos_formdb() {
-    strcpy(APP.base, "FormDB");
-    snprintf(APP.data, sizeof(APP.data), "%.500s/data", APP.base);
-    snprintf(APP.forms, sizeof(APP.forms), "%.500s/forms", APP.data);
-    snprintf(APP.records, sizeof(APP.records), "%.500s/records", APP.data);
-    snprintf(APP.templates, sizeof(APP.templates), "%.500s/templates", APP.base);
-    snprintf(APP.exports, sizeof(APP.exports), "%.500s/exports", APP.base);
-    snprintf(APP.backups, sizeof(APP.backups), "%.500s/backups", APP.base);
-}
-
-void criar_diretorios() {
-    struct stat st = {0};
-    
-    if (stat(APP.base, &st) == -1) {
-        MKDIR(APP.base);
-    }
-    if (stat(APP.data, &st) == -1) {
-        MKDIR(APP.data);
-    }
-    if (stat(APP.forms, &st) == -1) {
-        MKDIR(APP.forms);
-    }
-    if (stat(APP.records, &st) == -1) {
-        MKDIR(APP.records);
-    }
-    if (stat(APP.templates, &st) == -1) {
-        MKDIR(APP.templates);
-    }
-    if (stat(APP.exports, &st) == -1) {
-        MKDIR(APP.exports);
-    }
-    if (stat(APP.backups, &st) == -1) {
-        MKDIR(APP.backups);
-    }
-}
-
 void exibir_banner() {
     printf(BOLD_CYAN);
     printf("\n");
@@ -306,9 +270,6 @@ int main() {
         printf("Erro ao inicializar diretórios do usuário.\n");
         return 1;
     }
-    
-    configurar_caminhos_formdb();
-    criar_diretorios();
     
     // Exibir banner
     exibir_banner();

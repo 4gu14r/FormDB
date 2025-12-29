@@ -25,6 +25,7 @@ jobs:
     - name: Compilar projeto (make)
       shell: msys2 {0}
       run: |
+        rm -f *.o *.exe
         make
 
     - name: Copiar DLL necessária (msys-2.0.dll)
