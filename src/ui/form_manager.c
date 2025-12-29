@@ -33,8 +33,8 @@ void gerenciar_editar(char *msgErro) {
         printf(YELLOW "\nSalvando alterações...\n" RESET);
         // Tenta salvar. Se salvar_formulario não estiver implementado no core, isso falhará na linkagem
         // ou precisará de um stub.
-        char filepath[300];
-        snprintf(filepath, sizeof(filepath), "data/forms/%s.form", form->name);
+        char filepath[1024];
+        snprintf(filepath, sizeof(filepath), "%s/%s.form", APP.forms, form->name);
         if (salvar_formulario(form, filepath)) {
             if (msgErro) snprintf(msgErro, 512, GREEN "\n✓ Formulário '%s' atualizado com sucesso!\n" RESET, form->displayName);
             else printf(GREEN "✓ Formulário atualizado com sucesso!\n" RESET);
@@ -77,8 +77,8 @@ void gerenciar_duplicar(char *msgErro) {
     
     printf(YELLOW "Criando cópia...\n" RESET);
     
-    char filepath[300];
-    snprintf(filepath, sizeof(filepath), "data/forms/%s.form", origem->name);
+    char filepath[1024];
+    snprintf(filepath, sizeof(filepath), "%s/%s.form", APP.forms, origem->name);
     if (salvar_formulario(origem, filepath)) {
         if (msgErro) snprintf(msgErro, 512, GREEN "\n✓ Formulário duplicado: %s\n" RESET, novo_nome_interno);
         else printf(GREEN "\n✓ Formulário duplicado com sucesso!\n" RESET);
@@ -108,13 +108,13 @@ void gerenciar_excluir(char *msgErro) {
     
     if (str_equal_ignore_case(confirm, "CONFIRMAR")) {
         // AppContext *app = get_app_context(); // APP is a global variable
-        char path_form[512];
-        char path_json[512];
+        char path_form[1024];
+        char path_json[1024];
         char path_csv[1024];
         
         // Define caminhos
-        snprintf(path_form, sizeof(path_form), "data/forms/%s.form", form->name);
-        snprintf(path_json, sizeof(path_json), "data/forms/%s.json", form->name);
+        snprintf(path_form, sizeof(path_form), "%s/%s.form", APP.forms, form->name);
+        snprintf(path_json, sizeof(path_json), "%s/%s.json", APP.forms, form->name);
         snprintf(path_csv, sizeof(path_csv), "%s/%s.csv", APP.records, form->name);
         
         // Remove arquivos

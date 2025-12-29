@@ -5,6 +5,7 @@
 #include "../utils/colors.h"
 #include "../utils/ui_utils.h"
 #include "../utils/string_utils.h"
+#include "../utils/app_context.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -272,8 +273,8 @@ Form* construir_formulario_interativo() {
     char salvar = ler_confirmacao_dialogo("FINALIZAR", "\nSalvar formulário? (s/n): ");
     
     if (salvar == 's' || salvar == 'S') {
-        char filepath[300];
-        snprintf(filepath, sizeof(filepath), "data/forms/%s.form", form->name);
+        char filepath[1024];
+        snprintf(filepath, sizeof(filepath), "%s/%s.form", APP.forms, form->name);
         
         if (salvar_formulario(form, filepath)) {
             printf(GREEN "\n✓ Formulário salvo em: %s\n" RESET, filepath);
@@ -289,7 +290,7 @@ Form* construir_formulario_interativo() {
 
 Form* selecionar_template() {
     struct dirent *de;
-    DIR *dr = opendir("templates");
+    DIR *dr = opendir(APP.templates);
     char templates[20][100];
     int count = 0;
 
@@ -340,8 +341,8 @@ Form* selecionar_template() {
         
         if (opcao < 1 || opcao > count) continue;
 
-        char filepath[200];
-        snprintf(filepath, sizeof(filepath), "templates/%s", templates[opcao-1]);
+        char filepath[1024];
+        snprintf(filepath, sizeof(filepath), "%s/%s", APP.templates, templates[opcao-1]);
         
         Form *form = importar_formulario_json(filepath);
         
@@ -382,8 +383,8 @@ Form* selecionar_template() {
                 str_to_lower(form->name);
             }
             
-            char filepath[300];
-            snprintf(filepath, sizeof(filepath), "data/forms/%s.form", form->name);
+            char filepath[1024];
+            snprintf(filepath, sizeof(filepath), "%s/%s.form", APP.forms, form->name);
             
             if (salvar_formulario(form, filepath)) {
                 printf(GREEN "\n✓ Formulário criado com sucesso!\n" RESET);

@@ -206,8 +206,8 @@ void processar_importacao(Form *form) {
     fclose(file);
 
     // Garante que a estrutura de pastas existe antes de salvar
-    ensure_directory_exists("data");
-    ensure_directory_exists("data/records");
+    ensure_directory_exists(APP.data);
+    ensure_directory_exists(APP.records);
 
     // Salva o banco de dados atualizado
     if (salvar_registros_csv(rs, db_path)) {

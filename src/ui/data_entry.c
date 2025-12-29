@@ -390,8 +390,8 @@ void menu_cadastro(Form *form, RecordSet *recordset) {
             }
                 
             case 4: {
-                char filepath[300];
-                snprintf(filepath, sizeof(filepath), "exports/%s.json", form->name);
+                char filepath[1024];
+                snprintf(filepath, sizeof(filepath), "%s/%s.json", APP.exports, form->name);
                 
                 if (exportar_json(recordset, filepath)) {
                     printf(GREEN "\n✓ Dados exportados para: %s\n" RESET, filepath);

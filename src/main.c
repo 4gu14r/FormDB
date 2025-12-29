@@ -24,26 +24,46 @@
 #include "utils/record_utils.h"
 #include "utils/app_context.h"
 
+#ifdef _WIN32
+    #include <direct.h>
+    #define MKDIR(path) _mkdir(path)
+#else
+    #define MKDIR(path) mkdir(path, 0700)
+#endif
+
+void configurar_caminhos_formdb() {
+    strcpy(APP.base, "FormDB");
+    snprintf(APP.data, sizeof(APP.data), "%.500s/data", APP.base);
+    snprintf(APP.forms, sizeof(APP.forms), "%.500s/forms", APP.data);
+    snprintf(APP.records, sizeof(APP.records), "%.500s/records", APP.data);
+    snprintf(APP.templates, sizeof(APP.templates), "%.500s/templates", APP.base);
+    snprintf(APP.exports, sizeof(APP.exports), "%.500s/exports", APP.base);
+    snprintf(APP.backups, sizeof(APP.backups), "%.500s/backups", APP.base);
+}
+
 void criar_diretorios() {
     struct stat st = {0};
     
-    if (stat("data", &st) == -1) {
-        mkdir("data", 0700);
+    if (stat(APP.base, &st) == -1) {
+        MKDIR(APP.base);
     }
-    if (stat("data/forms", &st) == -1) {
-        mkdir("data/forms", 0700);
+    if (stat(APP.data, &st) == -1) {
+        MKDIR(APP.data);
     }
-    if (stat("data/records", &st) == -1) {
-        mkdir("data/records", 0700);
+    if (stat(APP.forms, &st) == -1) {
+        MKDIR(APP.forms);
     }
-    if (stat("templates", &st) == -1) {
-        mkdir("templates", 0700);
+    if (stat(APP.records, &st) == -1) {
+        MKDIR(APP.records);
     }
-    if (stat("exports", &st) == -1) {
-        mkdir("exports", 0700);
+    if (stat(APP.templates, &st) == -1) {
+        MKDIR(APP.templates);
     }
-    if (stat("backups", &st) == -1) {
-        mkdir("backups", 0700);
+    if (stat(APP.exports, &st) == -1) {
+        MKDIR(APP.exports);
+    }
+    if (stat(APP.backups, &st) == -1) {
+        MKDIR(APP.backups);
     }
 }
 
@@ -65,8 +85,8 @@ void exibir_banner() {
 RecordSet* preparar_recordset(Form *form, int exibir_mensagem) {
     RecordSet *recordset = criar_recordset(form);
     
-    char filepath[300];
-    snprintf(filepath, sizeof(filepath), "data/records/%s.csv", form->name);
+    char filepath[1024];
+    snprintf(filepath, sizeof(filepath), "%s/%s.csv", APP.records, form->name);
     
     RecordSet *loaded = carregar_registros_csv(form, filepath);
     if (loaded) {
@@ -281,10 +301,14 @@ void menu_principal() {
 }
 
 int main() {
+
     if (!inicializar_app_context()) {
         printf("Erro ao inicializar diretórios do usuário.\n");
         return 1;
     }
+    
+    configurar_caminhos_formdb();
+    criar_diretorios();
     
     // Exibir banner
     exibir_banner();

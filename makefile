@@ -48,11 +48,6 @@ dirs:
 	@mkdir -p $(OBJ_DIR)/storage
 	@mkdir -p $(OBJ_DIR)/search
 	@mkdir -p $(OBJ_DIR)/utils
-	@mkdir -p data/forms
-	@mkdir -p data/records
-	@mkdir -p templates
-	@mkdir -p exports
-	@mkdir -p backups
 
 # Linkar executável
 $(TARGET): $(ALL_OBJ)
