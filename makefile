@@ -13,7 +13,7 @@ NC = \033[0m # No Color
 
 # Arquivos fonte
 CORE_SRC = $(SRC_DIR)/core/field.c $(SRC_DIR)/core/form.c $(SRC_DIR)/core/record.c
-UI_SRC = $(SRC_DIR)/ui/form_builder.c $(SRC_DIR)/ui/data_entry.c $(SRC_DIR)/ui/form_browser.c $(SRC_DIR)/ui/exporter.c
+UI_SRC = $(SRC_DIR)/ui/form_builder.c $(SRC_DIR)/ui/data_entry.c $(SRC_DIR)/ui/form_browser.c $(SRC_DIR)/ui/exporter.c $(SRC_DIR)/ui/form_manager.c $(SRC_DIR)/ui/importer.c
 STORAGE_SRC = $(SRC_DIR)/storage/csv_handler.c $(SRC_DIR)/storage/json_handler.c
 SEARCH_SRC = $(SRC_DIR)/search/search.c
 UTILS_SRC = $(SRC_DIR)/utils/string_utils.c $(SRC_DIR)/utils/input_utils.c $(SRC_DIR)/utils/ui_utils.c $(SRC_DIR)/utils/record_utils.c $(SRC_DIR)/utils/file_utils.c
@@ -108,9 +108,7 @@ cleanall: clean
 
 # Informações do projeto
 info:
-	@echo "$(CYAN)╔════════════════════════════════════════╗$(NC)"
-	@echo "$(CYAN)║         FormDB - Informações          ║$(NC)"
-	@echo "$(CYAN)╚════════════════════════════════════════╝$(NC)"
+	@echo "$(CYAN)FormDB - Informações$(NC)"
 	@echo ""
 	@echo "$(GREEN)Compilador:$(NC) $(CC)"
 	@echo "$(GREEN)Flags:$(NC) $(CFLAGS)"
@@ -131,9 +129,7 @@ info:
 
 # Ajuda
 help:
-	@echo "$(CYAN)╔════════════════════════════════════════╗$(NC)"
-	@echo "$(CYAN)║         FormDB - Comandos              ║$(NC)"
-	@echo "$(CYAN)╚════════════════════════════════════════╝$(NC)"
+	@echo "$(CYAN)FormDB - Comandos$(NC)"
 	@echo ""
 	@echo "$(GREEN)make$(NC)          - Compila o projeto"
 	@echo "$(GREEN)make run$(NC)      - Compila e executa"

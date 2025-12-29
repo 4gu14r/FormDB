@@ -15,6 +15,8 @@
 #include "ui/form_builder.h"
 #include "ui/data_entry.h"
 #include "ui/form_browser.h"
+#include "ui/form_manager.h"
+#include "ui/importer.h"
 #include "ui/exporter.h"
 #include "search/search.h"
 #include "utils/colors.h"
@@ -98,8 +100,6 @@ void menu_principal() {
     do {
         limpar_tela(); // Limpa a tela a cada iteração para redesenhar corretamente
         desenhar_cabecalho("MENU PRINCIPAL");
-        printf("   0. " RED "🚪 Sair\n" RESET);
-        
         printf("   1. " GREEN "📝 Criar Novo Formulário\n" RESET);
         printf("   2. " GREEN "📋 Abrir Formulário Existente\n" RESET);
         printf("   3. " GREEN "✏️  Cadastrar Dados\n" RESET);
@@ -110,6 +110,7 @@ void menu_principal() {
         printf("   8. " GREEN "📈 Relatórios e Estatísticas\n" RESET);
         printf("   9. " GREEN "🗂️  Gerenciar Formulários\n" RESET);
         printf("   10." GREEN "💾 Templates Prontos\n" RESET);
+        printf("   0. " RED "🚪 Sair\n" RESET);
         
         if (formAtual) {
             printf(GREEN "\n✓ Formulário ativo: %s (%d campos, %d registros)\n" RESET,
@@ -233,10 +234,7 @@ void menu_principal() {
             
             case 7: {
                 // Importar
-                printf(YELLOW "\n[Importação - Em desenvolvimento]\n" RESET);
-                printf("Formatos suportados: CSV, JSON, Excel\n");
-                printf("Pressione ENTER para continuar...");
-                getchar();
+                menu_importar();
                 break;
             }
             
@@ -251,10 +249,7 @@ void menu_principal() {
             
             case 9: {
                 // Gerenciar formulários
-                printf(YELLOW "\n[Gerenciamento - Em desenvolvimento]\n" RESET);
-                printf("Editar, excluir, duplicar formulários\n");
-                printf("Pressione ENTER para continuar...");
-                getchar();
+                menu_gerenciar_formularios();
                 break;
             }
             
