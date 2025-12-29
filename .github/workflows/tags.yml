@@ -1,0 +1,120 @@
+name: Criar Tag
+
+on:
+  workflow_run:
+    workflows: ["Build + Installer (Windows)"]
+    types:
+      - completed
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Instalar GitHub CLI
+        run: |
+          sudo apt update
+          sudo apt install gh -y
+
+      - name: Configurar Git
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+
+      - name: Obter próxima versão com base nos commits
+        id: version
+        run: |
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "Última tag: $LAST_TAG"
+
+          if git rev-parse "$LAST_TAG" >/dev/null 2>&1; then
+            COMMITS=$(git log ${LAST_TAG}..HEAD --pretty=format:"%s")
+          else
+            COMMITS=$(git log --pretty=format:"%s")
+          fi
+
+          echo "Commits desde $LAST_TAG:"
+          echo "$COMMITS"
+
+          MAJOR=0
+          MINOR=0
+          PATCH=0
+
+          if echo "$COMMITS" | grep -q "BREAKING CHANGE"; then
+            MAJOR=1
+          fi
+          if echo "$COMMITS" | grep -q "^feat"; then
+            MINOR=1
+          fi
+          if echo "$COMMITS" | grep -q "^fix"; then
+            PATCH=1
+          fi
+
+          if [ $MAJOR -eq 0 ] && [ $MINOR -eq 0 ] && [ $PATCH -eq 0 ]; then
+            echo "⚠️ Nenhuma mudança significativa detectada (sem feat, fix ou BREAKING CHANGE)."
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "tag=$LAST_TAG" >> $GITHUB_OUTPUT
+          else
+            OLD_VERSION=$(echo "$LAST_TAG" | sed 's/v//')
+            IFS='.' read -r OLD_MAJOR OLD_MINOR OLD_PATCH <<< "$OLD_VERSION"
+
+            NEW_MAJOR=$OLD_MAJOR
+            NEW_MINOR=$OLD_MINOR
+            NEW_PATCH=$OLD_PATCH
+
+            if [ $MAJOR -eq 1 ]; then
+              NEW_MAJOR=$((OLD_MAJOR+1))
+              NEW_MINOR=0
+              NEW_PATCH=0
+            elif [ $MINOR -eq 1 ]; then
+              NEW_MINOR=$((OLD_MINOR+1))
+              NEW_PATCH=0
+            elif [ $PATCH -eq 1 ]; then
+              NEW_PATCH=$((OLD_PATCH+1))
+            fi
+
+            NEW_VERSION="v${NEW_MAJOR}.${NEW_MINOR}.${NEW_PATCH}"
+            echo "Nova versão: $NEW_VERSION"
+
+            echo "tag=$NEW_VERSION" >> $GITHUB_OUTPUT
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Autenticar com token
+        run: |
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+
+      - name: Verificar se tag já existe
+        id: check_tag
+        run: |
+          if git rev-parse "${{ steps.version.outputs.tag }}" >/dev/null 2>&1; then
+            echo "A tag já existe. Ignorando criação."
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Criar nova tag e enviar
+        if: steps.version.outputs.skip == 'false' && steps.check_tag.outputs.exists == 'false'
+        run: |
+          git tag ${{ steps.version.outputs.tag }}
+          git push origin ${{ steps.version.outputs.tag }}
+
+      - name: Salvar tag como artefato
+        run: |
+          echo "${{ steps.version.outputs.tag }}" > tag.txt
+          cat tag.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-tag
+          path: tag.txt

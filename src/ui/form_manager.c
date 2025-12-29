@@ -7,6 +7,7 @@
 #include "../utils/colors.h"
 #include "../utils/ui_utils.h"
 #include "../utils/string_utils.h"
+#include "../utils/app_context.h"
 #include "form_browser.h"
 
 void gerenciar_editar(char *msgErro) {
@@ -106,14 +107,15 @@ void gerenciar_excluir(char *msgErro) {
     ler_texto_dialogo("EXCLUIR FORMULÁRIO", prompt, confirm, sizeof(confirm));
     
     if (str_equal_ignore_case(confirm, "CONFIRMAR")) {
-        char path_form[256];
-        char path_json[256];
-        char path_csv[256];
+        // AppContext *app = get_app_context(); // APP is a global variable
+        char path_form[512];
+        char path_json[512];
+        char path_csv[1024];
         
         // Define caminhos
         snprintf(path_form, sizeof(path_form), "data/forms/%s.form", form->name);
         snprintf(path_json, sizeof(path_json), "data/forms/%s.json", form->name);
-        snprintf(path_csv, sizeof(path_csv), "data/records/%s.csv", form->name);
+        snprintf(path_csv, sizeof(path_csv), "%s/%s.csv", APP.records, form->name);
         
         // Remove arquivos
         int r1 = remove(path_form);

@@ -30,8 +30,8 @@ void criar_diretorios() {
     if (stat("data", &st) == -1) {
         mkdir("data", 0700);
     }
-    if (stat("data/forms", &st) == -1) {
-        mkdir("data/forms", 0700);
+    if (stat(APP.forms, &st) == -1) {
+        mkdir(APP.forms, 0700);
     }
     if (stat("data/records", &st) == -1) {
         mkdir("data/records", 0700);
@@ -66,7 +66,7 @@ RecordSet* preparar_recordset(Form *form, int exibir_mensagem) {
     RecordSet *recordset = criar_recordset(form);
     
     char filepath[300];
-    snprintf(filepath, sizeof(filepath), "data/records/%s.csv", form->name);
+    snprintf(filepath, sizeof(filepath), APP.records, form->name);
     
     RecordSet *loaded = carregar_registros_csv(form, filepath);
     if (loaded) {
@@ -281,6 +281,7 @@ void menu_principal() {
 }
 
 int main() {
+
     if (!inicializar_app_context()) {
         printf("Erro ao inicializar diretórios do usuário.\n");
         return 1;

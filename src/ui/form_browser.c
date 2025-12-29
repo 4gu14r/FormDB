@@ -6,6 +6,7 @@
 #include "../utils/colors.h"
 #include "../utils/ui_utils.h"
 #include "../utils/file_utils.h"
+#include "../utils/app_context.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -22,7 +23,7 @@ static void obter_lista_formularios(char *buffer, size_t size) {
     buffer[0] = '\0';
     DIR *d;
     struct dirent *dir;
-    d = opendir("data/forms");
+    d = opendir(APP.forms);
     
     strcat(buffer, "\n");
     
@@ -84,7 +85,7 @@ Form* selecionar_formulario_interativo() {
     
     // Usa a função utilitária para encontrar o arquivo correto
     char filepath[300];
-    bool encontrado = encontrar_arquivo_case_insensitive("data/forms", filename, filepath, sizeof(filepath));
+    bool encontrado = encontrar_arquivo_case_insensitive(APP.forms, filename, filepath, sizeof(filepath));
     
     if (encontrado) {
         Form *form = carregar_formulario(filepath);

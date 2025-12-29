@@ -2,6 +2,7 @@
 #include "../utils/ui_utils.h"
 #include "../utils/colors.h"
 #include "../utils/string_utils.h"
+#include "../utils/app_context.h"
 #include "../core/form.h"
 #include "../core/record.h"
 #include "form_browser.h"
@@ -140,20 +141,19 @@ void processar_importacao(Form *form) {
     }
 
     // Carrega dados atuais para manter integridade e IDs
-    char db_path[300];
-    snprintf(db_path, sizeof(db_path), "data/records/%s.csv", form->name);
+    char db_path[1024];
+    snprintf(db_path, sizeof(db_path),
+         "%s/%s.csv", APP.records, form->name);
+
     RecordSet *rs = carregar_registros_csv(form, db_path);
     if (!rs) {
-        // Se não existe, cria um novo
-        // Assumindo que existe uma função para criar RecordSet vazio se carregar falhar
-        // Como não temos acesso ao record.c, vamos assumir que carregar retorna NULL se não existe
-        // e precisaríamos criar um novo. Mas para simplificar, vamos abortar se falhar a criação básica.
-        printf(YELLOW "\n⚠ Criando novo conjunto de registros...\n" RESET);
-        // rs = criar_recordset(form); // Assumindo existência
-        // Se carregar_registros_csv já cria vazio se não achar arquivo, ótimo.
-        // Caso contrário, abortamos para evitar crash.
-        fclose(file);
-        return; 
+        // Se não existe arquivo de registros, cria um novo conjunto vazio na memória
+        rs = criar_recordset(form);
+        if (!rs) {
+            printf(RED "\n✗ Erro fatal ao inicializar memória para registros.\n" RESET);
+            fclose(file);
+            return;
+        }
     }
 
     char line[4096];
@@ -219,7 +219,7 @@ void processar_importacao(Form *form) {
     }
 
     // Liberar memória (assumindo função existente)
-    // liberar_recordset(rs); 
+    liberar_recordset(rs); 
     
     printf("\nPressione ENTER para continuar...");
     esperar_enter_check_resize();

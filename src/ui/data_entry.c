@@ -8,6 +8,7 @@
 #include "../utils/colors.h"
 #include "../utils/ui_utils.h"
 #include "../utils/record_utils.h"
+#include "../utils/app_context.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -303,8 +304,8 @@ bool cadastrar_registro_interativo(Form *form, RecordSet *recordset) {
         form->nextRecordId++;
         
         // Salvar automaticamente no disco para evitar perda de dados
-        char filepath[300];
-        snprintf(filepath, sizeof(filepath), "data/records/%s.csv", form->name);
+        char filepath[1024];
+        snprintf(filepath, sizeof(filepath), "%s/%s.csv", APP.records, form->name);
         salvar_registros_csv(recordset, filepath);
         
         limpar_tela();
@@ -374,8 +375,8 @@ void menu_cadastro(Form *form, RecordSet *recordset) {
                 break;
                 
             case 3: {
-                char filepath[300];
-                snprintf(filepath, sizeof(filepath), "data/records/%s.csv", form->name);
+                char filepath[1024];
+                snprintf(filepath, sizeof(filepath), "%s/%s.csv", APP.records, form->name);
                 
                 if (salvar_registros_csv(recordset, filepath)) {
                     printf(GREEN "\n✓ Dados salvos em: %s\n" RESET, filepath);

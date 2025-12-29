@@ -3,6 +3,7 @@
 #include "../utils/ui_utils.h"
 #include "../utils/file_utils.h"
 #include "../utils/colors.h"
+#include "../utils/app_context.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -31,16 +32,13 @@ void menu_exportar(Form *form, RecordSet *recordset) {
         
         if (opcao == '1' || opcao == '2') {
             // CSV ou Excel
-            char caminho[512];
-            char default_path[512];
+            char caminho[1024];
+            char default_path[1024];
             
-            // Define extensão baseada na escolha
-            const char *ext = (opcao == '2') ? "csv" : "csv"; // Excel também abre CSV
-            
-            snprintf(default_path, sizeof(default_path), "exports/%s.%s", form->name, ext);
+            snprintf(default_path, sizeof(default_path), "%s/%s.csv", APP.exports, form->name);
             
             // Pergunta o caminho
-            char msg[600];
+            char msg[2048];
             snprintf(msg, sizeof(msg), "Caminho do arquivo (Enter para: %s):", default_path);
             
             if (!ler_texto_dialogo("SALVAR ARQUIVO", msg, caminho, sizeof(caminho))) {
@@ -53,7 +51,7 @@ void menu_exportar(Form *form, RecordSet *recordset) {
             }
             
             // Verifica/Cria diretório pai
-            char dir_pai[512];
+            char dir_pai[1024];
             extrair_diretorio_pai(caminho, dir_pai, sizeof(dir_pai));
             
             if (!criar_diretorio(dir_pai)) {
