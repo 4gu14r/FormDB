@@ -1,6 +1,7 @@
 #include "form_builder.h"
 #include "../core/form.h"
 #include "../core/field.h"
+#include "../storage/json_handler.h"
 #include "../utils/colors.h"
 #include "../utils/ui_utils.h"
 #include "../utils/string_utils.h"
@@ -9,6 +10,7 @@
 #include <string.h>
 #include <errno.h>
 #include <ctype.h>
+#include <dirent.h>
 
 void exibir_tipos_campo() {
     desenhar_cabecalho("TIPOS DE CAMPO DISPONÍVEIS");
@@ -281,4 +283,115 @@ Form* construir_formulario_interativo() {
     }
     
     return form;
+}
+
+// --- TEMPLATES ---
+
+Form* selecionar_template() {
+    struct dirent *de;
+    DIR *dr = opendir("templates");
+    char templates[20][100];
+    int count = 0;
+
+    if (dr == NULL) {
+        printf(RED "Erro ao abrir pasta de templates!\n" RESET);
+        return NULL;
+    }
+
+    // Lista arquivos .json
+    while ((de = readdir(dr)) != NULL && count < 20) {
+        if (strstr(de->d_name, ".json")) {
+            strncpy(templates[count], de->d_name, 99);
+            count++;
+        }
+    }
+    closedir(dr);
+
+    while(1) {
+        char menu_text[4096] = "";
+        
+        if (count == 0) {
+            strcat(menu_text, YELLOW "Nenhum template encontrado na pasta 'templates/'.\n" RESET);
+        }
+
+        for (int i = 0; i < count; i++) {
+            // Remove extensão .json para exibição
+            char display[100];
+            strcpy(display, templates[i]);
+            char *dot = strrchr(display, '.');
+            if (dot) *dot = '\0';
+            
+            // Capitaliza primeira letra
+            display[0] = toupper(display[0]);
+            
+            char line[200];
+            snprintf(line, sizeof(line), "   %d. " GREEN "%s\n" RESET, i + 1, display);
+            strcat(menu_text, line);
+        }
+        strcat(menu_text, "   0. " RED "Voltar\n" RESET);
+        strcat(menu_text, "\nEscolha um template para criar: ");
+        
+        int opcao;
+        if (!ler_int_dialogo("TEMPLATES DISPONÍVEIS", menu_text, &opcao)) {
+            continue;
+        }
+        
+        if (opcao == 0) return NULL;
+        
+        if (opcao < 1 || opcao > count) continue;
+
+        char filepath[200];
+        snprintf(filepath, sizeof(filepath), "templates/%s", templates[opcao-1]);
+        
+        Form *form = importar_formulario_json(filepath);
+        
+        if (form) {
+            char preview_text[4096];
+            snprintf(preview_text, sizeof(preview_text), 
+                BOLD_WHITE "Formulário: " RESET "%s\n"
+                DIM "%s\n" RESET
+                "\n" CYAN "Campos definidos:\n" RESET,
+                form->displayName, form->description);
+            
+            for (int i = 0; i < form->numFields; i++) {
+                Field *f = form->fields[i];
+                char line[256];
+                snprintf(line, sizeof(line), "  %2d. " BOLD "%s" RESET " (" DIM "%s" RESET ")\n", 
+                       i + 1, f->label, tipo_campo_string(f->type));
+                if (strlen(preview_text) + strlen(line) < sizeof(preview_text) - 100) {
+                    strcat(preview_text, line);
+                }
+            }
+            strcat(preview_text, "\n" YELLOW "Deseja usar este template? (s/n): " RESET);
+
+            char confirm = ler_confirmacao_dialogo("PRÉ-VISUALIZAÇÃO", preview_text);
+            
+            if (confirm != 's' && confirm != 'S') {
+                liberar_formulario(form);
+                continue;
+            }
+
+            char novoNome[100];
+            char prompt[200];
+            snprintf(prompt, sizeof(prompt), "\nNome do arquivo para salvar (Enter para '%s'): ", form->name);
+            
+            ler_texto_dialogo("SALVAR TEMPLATE", prompt, novoNome, sizeof(novoNome));
+            
+            if (strlen(novoNome) > 0) {
+                strncpy(form->name, novoNome, sizeof(form->name)-1);
+                str_to_lower(form->name);
+            }
+            
+            char filepath[300];
+            snprintf(filepath, sizeof(filepath), "data/forms/%s.form", form->name);
+            
+            if (salvar_formulario(form, filepath)) {
+                printf(GREEN "\n✓ Formulário criado com sucesso!\n" RESET);
+                printf("Salvo em: %s\n", filepath);
+                printf("\nPressione ENTER para continuar...");
+                esperar_enter_check_resize();
+                return form;
+            }
+        }
+    }
 }
