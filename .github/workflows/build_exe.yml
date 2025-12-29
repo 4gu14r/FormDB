@@ -2,7 +2,7 @@ name: Build EXE on Windows
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
   workflow_dispatch:
 
 jobs:
@@ -20,7 +20,7 @@ jobs:
         update: true
         install: >
           mingw-w64-x86_64-gcc
-          mingw-w64-x86_64-make
+          make
 
     - name: Compilar projeto (make)
       shell: msys2 {0}
