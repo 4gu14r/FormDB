@@ -22,7 +22,7 @@ jobs:
           gcc
           make
 
-    - name: Compilar projeto
+    - name: Compilar projeto (make)
       shell: msys2 {0}
       run: |
         make
@@ -35,12 +35,12 @@ jobs:
     - name: Instalar Inno Setup
       run: choco install innosetup -y
 
-    - name: Criar instalador
+    - name: Criar instalador (Inno Setup)
       run: |
-        iscc installer\formdb.iss
+        iscc "$env:GITHUB_WORKSPACE\installer\formdb.iss"
 
     - name: Salvar instalador como artefato
       uses: actions/upload-artifact@v4
       with:
         name: formdb-installer
-        path: dist/FormDB-Setup.exe
+        path: dist\FormDB-Setup.exe
