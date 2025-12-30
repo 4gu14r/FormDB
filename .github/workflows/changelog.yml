@@ -43,19 +43,32 @@ jobs:
           echo "tag=$TAG" >> $GITHUB_OUTPUT
 
       - name: Gerar changelog
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           NEW_TAG="${{ steps.tag.outputs.tag }}"
           echo "## $NEW_TAG - $(date +'%Y-%m-%d')" > temp_changelog.md
+
           LAST_TAG=$(git describe --tags --abbrev=0 ${NEW_TAG}^ 2>/dev/null || echo "")
 
-          echo "Última tag: $LAST_TAG"
-          echo "Nova tag: $NEW_TAG"
-
           if [ -z "$LAST_TAG" ]; then
-            git log --pretty=format:"- %s" | sed -E 's/\[(skip ci|ci skip)\]//gi' >> temp_changelog.md
+            COMMITS=$(git log --pretty=format:"%H")
           else
-            git log $LAST_TAG..$NEW_TAG --pretty=format:"- %s" | sed -E 's/\[(skip ci|ci skip)\]//gi' >> temp_changelog.md
+            COMMITS=$(git log $LAST_TAG..$NEW_TAG --pretty=format:"%H")
           fi
+
+          for COMMIT in $COMMITS; do
+            SUBJECT=$(git log -1 --pretty=format:"%s" $COMMIT)
+
+            # Tenta extrair número do PR (merge commit)
+            if [[ "$SUBJECT" =~ \#([0-9]+) ]]; then
+              PR_NUMBER="${BASH_REMATCH[1]}"
+              AUTHOR=$(gh pr view "$PR_NUMBER" --json author -q '.author.login')
+              echo "- $SUBJECT (@$AUTHOR)" >> temp_changelog.md
+            else
+              echo "- $SUBJECT" >> temp_changelog.md
+            fi
+          done
 
           echo "" >> temp_changelog.md
 
@@ -70,7 +83,6 @@ jobs:
           fi
 
           mv temp_changelog.md CHANGELOG.md
-          cat CHANGELOG.md
 
       - name: Commitar e pushar changelog
         run: |
