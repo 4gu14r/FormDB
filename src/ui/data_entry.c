@@ -8,7 +8,10 @@
 #include "../utils/colors.h"
 #include "../utils/ui_utils.h"
 #include "../utils/record_utils.h"
+<<<<<<< HEAD
+=======
 #include "../utils/app_context.h"
+>>>>>>> cd0de64bb0fd98426ae2df168632884f345e13cd
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -304,8 +307,13 @@ bool cadastrar_registro_interativo(Form *form, RecordSet *recordset) {
         form->nextRecordId++;
         
         // Salvar automaticamente no disco para evitar perda de dados
+<<<<<<< HEAD
+        char filepath[300];
+        snprintf(filepath, sizeof(filepath), "data/records/%s.csv", form->name);
+=======
         char filepath[1024];
         snprintf(filepath, sizeof(filepath), "%s/%s.csv", APP.records, form->name);
+>>>>>>> cd0de64bb0fd98426ae2df168632884f345e13cd
         salvar_registros_csv(recordset, filepath);
         
         limpar_tela();
@@ -375,8 +383,13 @@ void menu_cadastro(Form *form, RecordSet *recordset) {
                 break;
                 
             case 3: {
+<<<<<<< HEAD
+                char filepath[300];
+                snprintf(filepath, sizeof(filepath), "data/records/%s.csv", form->name);
+=======
                 char filepath[1024];
                 snprintf(filepath, sizeof(filepath), "%s/%s.csv", APP.records, form->name);
+>>>>>>> cd0de64bb0fd98426ae2df168632884f345e13cd
                 
                 if (salvar_registros_csv(recordset, filepath)) {
                     printf(GREEN "\n✓ Dados salvos em: %s\n" RESET, filepath);
@@ -390,8 +403,13 @@ void menu_cadastro(Form *form, RecordSet *recordset) {
             }
                 
             case 4: {
+<<<<<<< HEAD
+                char filepath[300];
+                snprintf(filepath, sizeof(filepath), "exports/%s.json", form->name);
+=======
                 char filepath[1024];
                 snprintf(filepath, sizeof(filepath), "%s/%s.json", APP.exports, form->name);
+>>>>>>> cd0de64bb0fd98426ae2df168632884f345e13cd
                 
                 if (exportar_json(recordset, filepath)) {
                     printf(GREEN "\n✓ Dados exportados para: %s\n" RESET, filepath);

@@ -1,4 +1,5 @@
 CC = gcc
+CFLAGS = -Wall -Wextra -std=c11 -I./src
 CFLAGS = -Wall -Wextra -std=c11 -g -I./src
 BIN_DIR = bin
 SRC_DIR = src
@@ -16,6 +17,7 @@ CORE_SRC = $(SRC_DIR)/core/field.c $(SRC_DIR)/core/form.c $(SRC_DIR)/core/record
 UI_SRC = $(SRC_DIR)/ui/form_builder.c $(SRC_DIR)/ui/data_entry.c $(SRC_DIR)/ui/form_browser.c $(SRC_DIR)/ui/exporter.c $(SRC_DIR)/ui/form_manager.c $(SRC_DIR)/ui/importer.c
 STORAGE_SRC = $(SRC_DIR)/storage/csv_handler.c $(SRC_DIR)/storage/json_handler.c
 SEARCH_SRC = $(SRC_DIR)/search/search.c
+UTILS_SRC = $(SRC_DIR)/utils/string_utils.c $(SRC_DIR)/utils/input_utils.c $(SRC_DIR)/utils/ui_utils.c $(SRC_DIR)/utils/record_utils.c $(SRC_DIR)/utils/file_utils.c
 UTILS_SRC = $(SRC_DIR)/utils/string_utils.c $(SRC_DIR)/utils/input_utils.c $(SRC_DIR)/utils/ui_utils.c $(SRC_DIR)/utils/record_utils.c $(SRC_DIR)/utils/file_utils.c $(SRC_DIR)/utils/app_context.c
 MAIN_SRC = $(SRC_DIR)/main.c
 
@@ -48,6 +50,11 @@ dirs:
 	@mkdir -p $(OBJ_DIR)/storage
 	@mkdir -p $(OBJ_DIR)/search
 	@mkdir -p $(OBJ_DIR)/utils
+	@mkdir -p data/forms
+	@mkdir -p data/records
+	@mkdir -p templates
+	@mkdir -p exports
+	@mkdir -p backups
 
 # Linkar executável
 $(TARGET): $(ALL_OBJ)

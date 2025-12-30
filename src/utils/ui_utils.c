@@ -86,6 +86,14 @@ int obter_largura_terminal() {
     #ifdef _WIN32
         CONSOLE_SCREEN_BUFFER_INFO csbi;
         int columns;
+<<<<<<< HEAD
+        GetStdHandle(STD_OUTPUT_HANDLE, &csbi);
+        columns = csbi.srWindow.Right - csbi.srWindow.Left + 1;
+        return columns;
+    #else
+    struct winsize w;
+    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == -1) {
+=======
         if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi)) {
             columns = csbi.srWindow.Right - csbi.srWindow.Left + 1;
         } else {
@@ -95,6 +103,7 @@ int obter_largura_terminal() {
     #else
     struct winsize w;
     if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == -1 || w.ws_col == 0) {
+>>>>>>> cd0de64bb0fd98426ae2df168632884f345e13cd
         return 80;
     }
     return w.ws_col;

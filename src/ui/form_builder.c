@@ -1,7 +1,10 @@
+<<<<<<< HEAD
+=======
 // Habilita extensões POSIX (necessário para realpath com -std=c11)
 #define _XOPEN_SOURCE 600
 #define _DEFAULT_SOURCE
 
+>>>>>>> cd0de64bb0fd98426ae2df168632884f345e13cd
 #include "form_builder.h"
 #include "../core/form.h"
 #include "../core/field.h"
@@ -9,7 +12,10 @@
 #include "../utils/colors.h"
 #include "../utils/ui_utils.h"
 #include "../utils/string_utils.h"
+<<<<<<< HEAD
+=======
 #include "../utils/app_context.h"
+>>>>>>> cd0de64bb0fd98426ae2df168632884f345e13cd
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -277,8 +283,13 @@ Form* construir_formulario_interativo() {
     char salvar = ler_confirmacao_dialogo("FINALIZAR", "\nSalvar formulário? (s/n): ");
     
     if (salvar == 's' || salvar == 'S') {
+<<<<<<< HEAD
+        char filepath[300];
+        snprintf(filepath, sizeof(filepath), "data/forms/%s.form", form->name);
+=======
         char filepath[1024];
         snprintf(filepath, sizeof(filepath), "%s/%s.form", APP.forms, form->name);
+>>>>>>> cd0de64bb0fd98426ae2df168632884f345e13cd
         
         if (salvar_formulario(form, filepath)) {
             printf(GREEN "\n✓ Formulário salvo em: %s\n" RESET, filepath);
@@ -294,7 +305,11 @@ Form* construir_formulario_interativo() {
 
 Form* selecionar_template() {
     struct dirent *de;
+<<<<<<< HEAD
+    DIR *dr = opendir("templates");
+=======
     DIR *dr = opendir(APP.templates);
+>>>>>>> cd0de64bb0fd98426ae2df168632884f345e13cd
     char templates[20][100];
     int count = 0;
 
@@ -305,10 +320,14 @@ Form* selecionar_template() {
 
     // Lista arquivos .json
     while ((de = readdir(dr)) != NULL && count < 20) {
+<<<<<<< HEAD
+        if (strstr(de->d_name, ".json")) {
+=======
         if (de->d_name[0] == '.') continue; 
 
         char *dot = strrchr(de->d_name, '.');
         if (dot && strcmp(dot, ".json") == 0) {
+>>>>>>> cd0de64bb0fd98426ae2df168632884f345e13cd
             strncpy(templates[count], de->d_name, 99);
             count++;
         }
@@ -318,6 +337,10 @@ Form* selecionar_template() {
     while(1) {
         char menu_text[4096] = "";
         
+<<<<<<< HEAD
+        if (count == 0) {
+            strcat(menu_text, YELLOW "Nenhum template encontrado na pasta 'templates/'.\n" RESET);
+=======
         // Resolve caminho absoluto para orientar o usuário
         char abs_path[1024] = {0};
         #ifdef _WIN32
@@ -332,6 +355,7 @@ Form* selecionar_template() {
 
         if (count == 0) {
             strcat(menu_text, YELLOW "Nenhum template encontrado.\n" RESET);
+>>>>>>> cd0de64bb0fd98426ae2df168632884f345e13cd
         }
 
         for (int i = 0; i < count; i++) {
@@ -348,9 +372,14 @@ Form* selecionar_template() {
             snprintf(line, sizeof(line), "   %d. " GREEN "%s\n" RESET, i + 1, display);
             strcat(menu_text, line);
         }
+<<<<<<< HEAD
+        strcat(menu_text, "   0. " RED "Voltar\n" RESET);
+        strcat(menu_text, "\nEscolha um template para criar: ");
+=======
 
         strcat(menu_text, "   0. " RED "Voltar\n" RESET);
         strcat(menu_text, "\nEscolha uma opção: ");
+>>>>>>> cd0de64bb0fd98426ae2df168632884f345e13cd
         
         int opcao;
         if (!ler_int_dialogo("TEMPLATES DISPONÍVEIS", menu_text, &opcao)) {
@@ -361,8 +390,13 @@ Form* selecionar_template() {
         
         if (opcao < 1 || opcao > count) continue;
 
+<<<<<<< HEAD
+        char filepath[200];
+        snprintf(filepath, sizeof(filepath), "templates/%s", templates[opcao-1]);
+=======
         char filepath[1024];
         snprintf(filepath, sizeof(filepath), "%s/%s", APP.templates, templates[opcao-1]);
+>>>>>>> cd0de64bb0fd98426ae2df168632884f345e13cd
         
         Form *form = importar_formulario_json(filepath);
         
@@ -403,8 +437,13 @@ Form* selecionar_template() {
                 str_to_lower(form->name);
             }
             
+<<<<<<< HEAD
+            char filepath[300];
+            snprintf(filepath, sizeof(filepath), "data/forms/%s.form", form->name);
+=======
             char filepath[1024];
             snprintf(filepath, sizeof(filepath), "%s/%s.form", APP.forms, form->name);
+>>>>>>> cd0de64bb0fd98426ae2df168632884f345e13cd
             
             if (salvar_formulario(form, filepath)) {
                 printf(GREEN "\n✓ Formulário criado com sucesso!\n" RESET);
