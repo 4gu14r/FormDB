@@ -77,6 +77,8 @@ jobs:
 
       # 5️⃣ Criar o Release no GitHub com a tag e o exe
       - name: Gerar changelog temporário
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           NEW_TAG=${{ steps.read_tag.outputs.tag }}
           LAST_TAG=$(git describe --tags --abbrev=0 "${NEW_TAG}^" 2>/dev/null || echo "")
