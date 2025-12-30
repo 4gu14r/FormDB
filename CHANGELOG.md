@@ -1,3 +1,6 @@
+## v0.2.0 - 2025-12-30
+- feat: Update workflows for release automation and enhance export functionality
+- docs: changelog atualizado 
 ## v0.1.0 - 2025-12-30
 - fix: Update workflow configurations and remove deprecated JSON templates
 - fix: Add missing directory structure for tools in installer script
