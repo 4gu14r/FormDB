@@ -1,3 +1,8 @@
+## v0.1.2 - 2025-12-30
+- fix: git test
+- fix: git test
+- docs: changelog atualizado [skip ci]
+
 ## v0.1.1 - 2025-12-30
 - fix: changer (@4gu14r)
 - fix: changer (@4gu14r)
