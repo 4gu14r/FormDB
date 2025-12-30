@@ -22,31 +22,6 @@
 #include "utils/colors.h"
 #include "utils/ui_utils.h"
 #include "utils/record_utils.h"
-<<<<<<< HEAD
-
-void criar_diretorios() {
-    struct stat st = {0};
-    
-    if (stat("data", &st) == -1) {
-        mkdir("data", 0700);
-    }
-    if (stat("data/forms", &st) == -1) {
-        mkdir("data/forms", 0700);
-    }
-    if (stat("data/records", &st) == -1) {
-        mkdir("data/records", 0700);
-    }
-    if (stat("templates", &st) == -1) {
-        mkdir("templates", 0700);
-    }
-    if (stat("exports", &st) == -1) {
-        mkdir("exports", 0700);
-    }
-    if (stat("backups", &st) == -1) {
-        mkdir("backups", 0700);
-    }
-}
-=======
 #include "utils/app_context.h"
 
 #ifdef _WIN32
@@ -55,7 +30,6 @@ void criar_diretorios() {
 #else
     #define MKDIR(path) mkdir(path, 0700)
 #endif
->>>>>>> cd0de64bb0fd98426ae2df168632884f345e13cd
 
 void exibir_banner() {
     printf(BOLD_CYAN);
@@ -75,13 +49,8 @@ void exibir_banner() {
 RecordSet* preparar_recordset(Form *form, int exibir_mensagem) {
     RecordSet *recordset = criar_recordset(form);
     
-<<<<<<< HEAD
-    char filepath[300];
-    snprintf(filepath, sizeof(filepath), "data/records/%s.csv", form->name);
-=======
     char filepath[1024];
     snprintf(filepath, sizeof(filepath), "%s/%s.csv", APP.records, form->name);
->>>>>>> cd0de64bb0fd98426ae2df168632884f345e13cd
     
     RecordSet *loaded = carregar_registros_csv(form, filepath);
     if (loaded) {
@@ -296,16 +265,11 @@ void menu_principal() {
 }
 
 int main() {
-<<<<<<< HEAD
-    // Criar estrutura de diretórios
-    criar_diretorios();
-=======
 
     if (!inicializar_app_context()) {
         printf("Erro ao inicializar diretórios do usuário.\n");
         return 1;
     }
->>>>>>> cd0de64bb0fd98426ae2df168632884f345e13cd
     
     // Exibir banner
     exibir_banner();

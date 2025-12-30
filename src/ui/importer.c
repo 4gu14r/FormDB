@@ -2,10 +2,7 @@
 #include "../utils/ui_utils.h"
 #include "../utils/colors.h"
 #include "../utils/string_utils.h"
-<<<<<<< HEAD
-=======
 #include "../utils/app_context.h"
->>>>>>> cd0de64bb0fd98426ae2df168632884f345e13cd
 #include "../core/form.h"
 #include "../core/record.h"
 #include "form_browser.h"
@@ -144,22 +141,6 @@ void processar_importacao(Form *form) {
     }
 
     // Carrega dados atuais para manter integridade e IDs
-<<<<<<< HEAD
-    char db_path[300];
-    snprintf(db_path, sizeof(db_path), "data/records/%s.csv", form->name);
-    RecordSet *rs = carregar_registros_csv(form, db_path);
-    if (!rs) {
-        // Se não existe, cria um novo
-        // Assumindo que existe uma função para criar RecordSet vazio se carregar falhar
-        // Como não temos acesso ao record.c, vamos assumir que carregar retorna NULL se não existe
-        // e precisaríamos criar um novo. Mas para simplificar, vamos abortar se falhar a criação básica.
-        printf(YELLOW "\n⚠ Criando novo conjunto de registros...\n" RESET);
-        // rs = criar_recordset(form); // Assumindo existência
-        // Se carregar_registros_csv já cria vazio se não achar arquivo, ótimo.
-        // Caso contrário, abortamos para evitar crash.
-        fclose(file);
-        return; 
-=======
     char db_path[1024];
     snprintf(db_path, sizeof(db_path),
          "%s/%s.csv", APP.records, form->name);
@@ -173,7 +154,6 @@ void processar_importacao(Form *form) {
             fclose(file);
             return;
         }
->>>>>>> cd0de64bb0fd98426ae2df168632884f345e13cd
     }
 
     char line[4096];
@@ -226,13 +206,8 @@ void processar_importacao(Form *form) {
     fclose(file);
 
     // Garante que a estrutura de pastas existe antes de salvar
-<<<<<<< HEAD
-    ensure_directory_exists("data");
-    ensure_directory_exists("data/records");
-=======
     ensure_directory_exists(APP.data);
     ensure_directory_exists(APP.records);
->>>>>>> cd0de64bb0fd98426ae2df168632884f345e13cd
 
     // Salva o banco de dados atualizado
     if (salvar_registros_csv(rs, db_path)) {
@@ -244,11 +219,7 @@ void processar_importacao(Form *form) {
     }
 
     // Liberar memória (assumindo função existente)
-<<<<<<< HEAD
-    // liberar_recordset(rs); 
-=======
     liberar_recordset(rs); 
->>>>>>> cd0de64bb0fd98426ae2df168632884f345e13cd
     
     printf("\nPressione ENTER para continuar...");
     esperar_enter_check_resize();
