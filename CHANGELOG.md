@@ -1,3 +1,7 @@
+## v0.1.4 - 2025-12-30
+- Merge pull request #9 from 4gu14r/dev
+- fix: test 3
+- docs: changelog atualizado 
 ## v0.1.3 - 2025-12-30
 - Merge pull request #8 from 4gu14r/dev
 - fix: test 1
