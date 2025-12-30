@@ -32,7 +32,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          RUN_ID=$(gh run list --workflow="Criar Tag" --branch=master --limit=1 --json databaseId -q '.[0].databaseId')
+          RUN_ID=$(gh run list --workflow="Criar Tag" --branch=main --limit=1 --json databaseId -q '.[0].databaseId')
           echo "Último run-id do workflow 'Criar Tag': $RUN_ID"
           gh run download $RUN_ID -n release-tag
 

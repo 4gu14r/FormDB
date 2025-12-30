@@ -305,7 +305,10 @@ Form* selecionar_template() {
 
     // Lista arquivos .json
     while ((de = readdir(dr)) != NULL && count < 20) {
-        if (strstr(de->d_name, ".json")) {
+        if (de->d_name[0] == '.') continue; 
+
+        char *dot = strrchr(de->d_name, '.');
+        if (dot && strcmp(dot, ".json") == 0) {
             strncpy(templates[count], de->d_name, 99);
             count++;
         }
@@ -328,7 +331,7 @@ Form* selecionar_template() {
         strcat(menu_text, msg);
 
         if (count == 0) {
-            strcat(menu_text, YELLOW "Nenhum template encontrado'.\n" RESET);
+            strcat(menu_text, YELLOW "Nenhum template encontrado.\n" RESET);
         }
 
         for (int i = 0; i < count; i++) {
@@ -346,12 +349,8 @@ Form* selecionar_template() {
             strcat(menu_text, line);
         }
 
-        desenhar_separador();
-        printf("\n");
         strcat(menu_text, "   0. " RED "Voltar\n" RESET);
-        printf("\n");
-        desenhar_separador();
-        strcat(menu_text, "\nEscolha um template para criar: ");
+        strcat(menu_text, "\nEscolha uma opção: ");
         
         int opcao;
         if (!ler_int_dialogo("TEMPLATES DISPONÍVEIS", menu_text, &opcao)) {
