@@ -60,13 +60,18 @@ jobs:
           for COMMIT in $COMMITS; do
             SUBJECT=$(git log -1 --pretty=format:"%s" $COMMIT)
 
-            # Tenta extrair número do PR (merge commit)
-            if [[ "$SUBJECT" =~ \#([0-9]+) ]]; then
+            # MERGE COMMIT → usar PR
+            if [[ "$SUBJECT" =~ Merge\ pull\ request\ \#([0-9]+) ]]; then
               PR_NUMBER="${BASH_REMATCH[1]}"
-              AUTHOR=$(gh pr view "$PR_NUMBER" --json author -q '.author.login')
-              echo "- $SUBJECT (@$AUTHOR)" >> temp_changelog.md
+
+              PR_TITLE=$(gh pr view "$PR_NUMBER" --json title -q '.title')
+              PR_AUTHOR=$(gh pr view "$PR_NUMBER" --json author -q '.author.login')
+
+              echo "- $PR_TITLE (@$PR_AUTHOR)" >> temp_changelog.md
             else
-              echo "- $SUBJECT" >> temp_changelog.md
+              # Commit normal
+              AUTHOR=$(git log -1 --pretty=format:"%an" $COMMIT)
+              echo "- $SUBJECT (@$AUTHOR)" >> temp_changelog.md
             fi
           done
 
@@ -83,6 +88,7 @@ jobs:
           fi
 
           mv temp_changelog.md CHANGELOG.md
+
 
       - name: Commitar e pushar changelog
         run: |
