@@ -26,7 +26,7 @@ jobs:
         run: |
           RUN_ID=$(gh run list \
             --workflow="Changelog" \
-            --branch=master --limit=1 \
+            --branch=main --limit=1 \
             --json databaseId,status \
             -q '.[] | select(.status=="completed") | .databaseId')
           echo "run_id=$RUN_ID" >> $GITHUB_OUTPUT
@@ -57,7 +57,7 @@ jobs:
         id: build_run
         run: |
           RUN_ID=$(gh run list \
-            --workflow="Build + Installer (Windows)" \
+            --workflow="Build Windows" \
             --branch=main --limit=1 \
             --json databaseId,status \
             -q '.[] | select(.status=="completed") | .databaseId')
@@ -96,8 +96,7 @@ jobs:
         with:
           tag_name: ${{ steps.read_tag.outputs.tag }}
           name: "${{ steps.read_tag.outputs.tag }}"
-          files: artifact/main.exe
+          files: artifact/FormDB-Setup.exe
           body_path: temp_changelog.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-

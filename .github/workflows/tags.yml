@@ -2,7 +2,7 @@ name: Criar Tag
 
 on:
   workflow_run:
-    workflows: ["Build + Installer (Windows)"]
+    workflows: ["Build Windows"]
     types:
       - completed
   workflow_dispatch:
