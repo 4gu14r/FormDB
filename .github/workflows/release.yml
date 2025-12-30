@@ -85,10 +85,10 @@ jobs:
 
           if [ -n "$LAST_TAG" ]; then
             git log $LAST_TAG..$NEW_TAG \
-              --pretty=format:"- %s _por_ @%an" | grep -v "github-actions@github.com" >> temp_changelog.md
+              --pretty=format:"- %s _por_ @%an" | grep -v "github-actions" | sed -E 's/\[(skip ci|ci skip)\]//gi' >> temp_changelog.md
           else
             git log \
-              --pretty=format:"- %s _por_ @%an" | grep -v "github-actions@github.com" >> temp_changelog.md
+              --pretty=format:"- %s _por_ @%an" | grep -v "github-actions" | sed -E 's/\[(skip ci|ci skip)\]//gi' >> temp_changelog.md
           fi
 
       - name: Criar Release
