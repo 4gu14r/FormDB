@@ -76,10 +76,9 @@ jobs:
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git checkout ${{ github.event.workflow_run.head_branch }}
           git add CHANGELOG.md
           git commit -m "docs: changelog atualizado [skip ci]" || echo "Nada para commitar"
-          git push origin ${{ github.event.workflow_run.head_branch }}
+          git push origin HEAD:${{ github.event.workflow_run.head_branch }}
 
       - name: Re‑upload tag como artefato
         uses: actions/upload-artifact@v4
