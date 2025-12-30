@@ -77,8 +77,6 @@ jobs:
 
       # 5️⃣ Criar o Release no GitHub com a tag e o exe
       - name: Gerar changelog temporário
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           NEW_TAG=${{ steps.read_tag.outputs.tag }}
           LAST_TAG=$(git describe --tags --abbrev=0 "${NEW_TAG}^" 2>/dev/null || echo "")
@@ -104,3 +102,13 @@ jobs:
               echo "- $PR_TITLE _por_ @$PR_AUTHOR" >> temp_changelog.md
             fi
           done
+
+      - name: Criar Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.read_tag.outputs.tag }}
+          name: "${{ steps.read_tag.outputs.tag }}"
+          files: artifact/FormDB-Setup.exe
+          body_path: temp_changelog.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
