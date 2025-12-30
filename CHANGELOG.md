@@ -1,3 +1,8 @@
+## v0.1.1 - 2025-12-30
+- fix: changer (@4gu14r)
+- fix: changer (@4gu14r)
+- docs: changelog atualizado [skip ci] (@github-actions)
+
 ## v0.1.0 - 2025-12-30
 - Merge pull request #5 from 4gu14r/dev (@4gu14r)
 - fix: letsgo
