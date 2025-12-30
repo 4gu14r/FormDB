@@ -58,7 +58,7 @@ jobs:
         run: |
           RUN_ID=$(gh run list \
             --workflow="Build + Installer (Windows)" \
-            --branch=master --limit=1 \
+            --branch=main --limit=1 \
             --json databaseId,status \
             -q '.[] | select(.status=="completed") | .databaseId')
           echo "run_id=$RUN_ID" >> $GITHUB_OUTPUT
