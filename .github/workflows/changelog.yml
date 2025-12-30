@@ -2,7 +2,7 @@ name: Changelog
 
 on:
   workflow_run:
-    workflows: ["Criar Tag"]
+    workflows: ["Criar Tag"] 
     types:
       - completed
 
@@ -19,7 +19,6 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-
       - name: Buscar todas as tags
         run: |
           git fetch --tags --force
@@ -44,34 +43,19 @@ jobs:
           echo "tag=$TAG" >> $GITHUB_OUTPUT
 
       - name: Gerar changelog
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           NEW_TAG="${{ steps.tag.outputs.tag }}"
           echo "## $NEW_TAG - $(date +'%Y-%m-%d')" > temp_changelog.md
-
           LAST_TAG=$(git describe --tags --abbrev=0 ${NEW_TAG}^ 2>/dev/null || echo "")
 
+          echo "Última tag: $LAST_TAG"
+          echo "Nova tag: $NEW_TAG"
+
           if [ -z "$LAST_TAG" ]; then
-            COMMITS=$(git log --pretty=format:"%H")
+            git log --pretty=format:"- %s" | sed -E 's/\[(skip ci|ci skip)\]//gi' >> temp_changelog.md
           else
-            COMMITS=$(git log $LAST_TAG..$NEW_TAG --pretty=format:"%H")
+            git log $LAST_TAG..$NEW_TAG --pretty=format:"- %s" | sed -E 's/\[(skip ci|ci skip)\]//gi' >> temp_changelog.md
           fi
-
-          for COMMIT in $COMMITS; do
-            SUBJECT=$(git log -1 --pretty=format:"%s" $COMMIT)
-
-            # MERGE COMMIT → usar PR (sem autor)
-            if [[ "$SUBJECT" =~ Merge\ pull\ request\ \#([0-9]+) ]]; then
-              PR_NUMBER="${BASH_REMATCH[1]}"
-              PR_TITLE=$(gh pr view "$PR_NUMBER" --json title -q '.title')
-
-              echo "- $PR_TITLE" >> temp_changelog.md
-            else
-              # Commit normal (sem autor)
-              echo "- $SUBJECT" >> temp_changelog.md
-            fi
-          done
 
           echo "" >> temp_changelog.md
 
@@ -86,6 +70,7 @@ jobs:
           fi
 
           mv temp_changelog.md CHANGELOG.md
+          cat CHANGELOG.md
 
       - name: Commitar e pushar changelog
         run: |
@@ -96,7 +81,7 @@ jobs:
           git commit -m "docs: changelog atualizado [skip ci]" || echo "Nada para commitar"
           git push origin ${{ github.event.workflow_run.head_branch }}
 
-      - name: Re-upload tag como artefato
+      - name: Re‑upload tag como artefato
         uses: actions/upload-artifact@v4
         with:
           name: release-tag

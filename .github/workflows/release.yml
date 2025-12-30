@@ -77,26 +77,30 @@ jobs:
 
       # 5️⃣ Criar o Release no GitHub com a tag e o exe
       - name: Gerar changelog temporário
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           NEW_TAG=${{ steps.read_tag.outputs.tag }}
           LAST_TAG=$(git describe --tags --abbrev=0 "${NEW_TAG}^" 2>/dev/null || echo "")
 
-          echo "## Changelog:" > temp_changelog.md
+          echo "## Changelog" > temp_changelog.md
 
           if [ -n "$LAST_TAG" ]; then
-            git log $LAST_TAG..$NEW_TAG \
-              --pretty=format:"- %s _por_ @%an" | grep -v "github-actions" | sed -E 's/\[(skip ci|ci skip)\]//gi' >> temp_changelog.md
+            COMMITS=$(git log $LAST_TAG..$NEW_TAG --pretty=format:"%H")
           else
-            git log \
-              --pretty=format:"- %s _por_ @%an" | grep -v "github-actions" | sed -E 's/\[(skip ci|ci skip)\]//gi' >> temp_changelog.md
+            COMMITS=$(git log --pretty=format:"%H")
           fi
 
-      - name: Criar Release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ steps.read_tag.outputs.tag }}
-          name: "${{ steps.read_tag.outputs.tag }}"
-          files: artifact/FormDB-Setup.exe
-          body_path: temp_changelog.md
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          for COMMIT in $COMMITS; do
+            SUBJECT=$(git log -1 --pretty=format:"%s" $COMMIT)
+
+            # Detecta merge de PR
+            if [[ "$SUBJECT" =~ Merge\ pull\ request\ \#([0-9]+) ]]; then
+              PR_NUMBER="${BASH_REMATCH[1]}"
+
+              PR_TITLE=$(gh pr view "$PR_NUMBER" --json title -q '.title')
+              PR_AUTHOR=$(gh pr view "$PR_NUMBER" --json author -q '.author.login')
+
+              echo "- $PR_TITLE _por_ @$PR_AUTHOR" >> temp_changelog.md
+            fi
+          done
