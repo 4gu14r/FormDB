@@ -1,0 +1,47 @@
+name: Build Windows
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout código
+      uses: actions/checkout@v3
+
+    - name: Instalar MSYS2 (gcc + make)
+      uses: msys2/setup-msys2@v2
+      with:
+        msystem: MSYS
+        update: true
+        install: >
+          gcc
+          make
+
+    - name: Compilar projeto (make)
+      shell: msys2 {0}
+      run: |
+        rm -f *.o *.exe
+        make
+
+    - name: Copiar DLL necessária (msys-2.0.dll)
+      shell: msys2 {0}
+      run: |
+        cp /usr/bin/msys-2.0.dll bin/
+
+    - name: Instalar Inno Setup
+      run: choco install innosetup -y
+
+    - name: Criar instalador (Inno Setup)
+      run: |
+        iscc "$env:GITHUB_WORKSPACE\installer\formdb.iss"
+
+    - name: Salvar instalador como artefato
+      uses: actions/upload-artifact@v4
+      with:
+        name: formdb-installer
+        path: dist\FormDB-Setup.exe

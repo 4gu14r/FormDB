@@ -1,5 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -std=c11 -I./src
+CFLAGS = -Wall -Wextra -std=c11 -g -I./src
 BIN_DIR = bin
 SRC_DIR = src
 OBJ_DIR = $(BIN_DIR)/obj
@@ -17,6 +18,7 @@ UI_SRC = $(SRC_DIR)/ui/form_builder.c $(SRC_DIR)/ui/data_entry.c $(SRC_DIR)/ui/f
 STORAGE_SRC = $(SRC_DIR)/storage/csv_handler.c $(SRC_DIR)/storage/json_handler.c
 SEARCH_SRC = $(SRC_DIR)/search/search.c
 UTILS_SRC = $(SRC_DIR)/utils/string_utils.c $(SRC_DIR)/utils/input_utils.c $(SRC_DIR)/utils/ui_utils.c $(SRC_DIR)/utils/record_utils.c $(SRC_DIR)/utils/file_utils.c
+UTILS_SRC = $(SRC_DIR)/utils/string_utils.c $(SRC_DIR)/utils/input_utils.c $(SRC_DIR)/utils/ui_utils.c $(SRC_DIR)/utils/record_utils.c $(SRC_DIR)/utils/file_utils.c $(SRC_DIR)/utils/app_context.c
 MAIN_SRC = $(SRC_DIR)/main.c
 
 ALL_SRC = $(CORE_SRC) $(UI_SRC) $(STORAGE_SRC) $(SEARCH_SRC) $(UTILS_SRC) $(MAIN_SRC)

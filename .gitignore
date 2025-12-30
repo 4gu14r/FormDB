@@ -3,3 +3,5 @@ data
 exports
 .vscode
 build.sh
+build.sh
+tools

@@ -1,11 +1,19 @@
 /* /workspaces/RegistroPessoas/src/ui/form_browser.c */
 // Habilita usleep (necessário com -std=c11)
+<<<<<<< HEAD
+=======
+#define _XOPEN_SOURCE 600
+>>>>>>> cd0de64bb0fd98426ae2df168632884f345e13cd
 #define _DEFAULT_SOURCE
 
 #include "form_browser.h"
 #include "../utils/colors.h"
 #include "../utils/ui_utils.h"
 #include "../utils/file_utils.h"
+<<<<<<< HEAD
+=======
+#include "../utils/app_context.h"
+>>>>>>> cd0de64bb0fd98426ae2df168632884f345e13cd
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,9 +28,30 @@
 // Helper para obter lista de formulários em string
 static void obter_lista_formularios(char *buffer, size_t size) {
     buffer[0] = '\0';
+<<<<<<< HEAD
     DIR *d;
     struct dirent *dir;
     d = opendir("data/forms");
+=======
+    
+        // Resolve caminho absoluto para orientar o usuário
+        char abs_path[1024] = {0};
+        #ifdef _WIN32
+            // _fullpath converte ".\tools\..." para "C:\Program Files\..."
+            if (_fullpath(abs_path, APP.forms, sizeof(abs_path)) == NULL) strncpy(abs_path, APP.forms, sizeof(abs_path)-1);
+        #else
+            if (realpath(APP.forms, abs_path) == NULL) strncpy(abs_path, APP.forms, sizeof(abs_path)-1);
+        #endif
+    
+
+    char msg[1200];
+    snprintf(msg, sizeof(msg), DIM "Local: " RESET BLUE "%s" RESET "\n" DIM "Adicione arquivos .form nesta pasta para aparecerem aqui.\n" RESET, abs_path);
+    if (strlen(buffer) + strlen(msg) < size - 1) strcat(buffer, msg);
+
+    DIR *d;
+    struct dirent *dir;
+    d = opendir(APP.forms);
+>>>>>>> cd0de64bb0fd98426ae2df168632884f345e13cd
     
     strcat(buffer, "\n");
     
@@ -83,8 +112,13 @@ Form* selecionar_formulario_interativo() {
     }
     
     // Usa a função utilitária para encontrar o arquivo correto
+<<<<<<< HEAD
     char filepath[300];
     bool encontrado = encontrar_arquivo_case_insensitive("data/forms", filename, filepath, sizeof(filepath));
+=======
+    char filepath[1024];
+    bool encontrado = encontrar_arquivo_case_insensitive(APP.forms, filename, filepath, sizeof(filepath));
+>>>>>>> cd0de64bb0fd98426ae2df168632884f345e13cd
     
     if (encontrado) {
         Form *form = carregar_formulario(filepath);
