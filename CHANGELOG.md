@@ -1,3 +1,7 @@
+## v0.1.5 - 2025-12-30
+- Merge pull request #10 from 4gu14r/dev
+- fix: ajust token
+- docs: changelog atualizado 
 ## v0.1.4 - 2025-12-30
 - Merge pull request #9 from 4gu14r/dev
 - fix: test 3
