@@ -57,7 +57,7 @@ jobs:
         id: build_run
         run: |
           RUN_ID=$(gh run list \
-            --workflow="Build EXE on Windows" \
+            --workflow="Build + Installer (Windows)" \
             --branch=master --limit=1 \
             --json databaseId,status \
             -q '.[] | select(.status=="completed") | .databaseId')
