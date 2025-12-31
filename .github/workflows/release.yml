@@ -85,24 +85,32 @@ jobs:
 
           echo "## Changelog" > temp_changelog.md
 
-          if [ -n "$LAST_TAG" ]; then
-            COMMITS=$(git log $LAST_TAG..$NEW_TAG --pretty=format:"%H")
-          else
+          if [ -z "$LAST_TAG" ]; then
             COMMITS=$(git log --pretty=format:"%H")
+          else
+            COMMITS=$(git log $LAST_TAG..$NEW_TAG --pretty=format:"%H")
           fi
 
           for COMMIT in $COMMITS; do
             SUBJECT=$(git log -1 --pretty=format:"%s" $COMMIT)
 
+            if [[ "$SUBJECT" =~ ^docs:\ changelog\ atualizado ]]; then
+              continue
+            fi
+
             # Detecta merge de PR
             if [[ "$SUBJECT" =~ Merge\ pull\ request\ \#([0-9]+) ]]; then
               PR_NUMBER="${BASH_REMATCH[1]}"
 
-              PR_TITLE=$(gh pr view "$PR_NUMBER" --json title -q '.title')
-              PR_AUTHOR=$(gh pr view "$PR_NUMBER" --json author -q '.author.login')
-
-              echo "- $PR_TITLE _por_ @$PR_AUTHOR" >> temp_changelog.md
+              if PR_INFO=$(gh pr view "$PR_NUMBER" --json title,author --template '{{.title}} _por_ @{{.author.login}}' 2>/dev/null); then
+                echo "- $PR_INFO" >> temp_changelog.md
+                continue
+              fi
             fi
+
+            # Commit normal (ou fallback se falhar ao pegar info do PR)
+            CLEAN_SUBJECT=$(echo "$SUBJECT" | sed -E 's/\[(skip ci|ci skip)\]//gi')
+            echo "- $CLEAN_SUBJECT" >> temp_changelog.md
           done
 
       - name: Criar Release
