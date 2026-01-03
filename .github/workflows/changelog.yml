@@ -1,0 +1,87 @@
+name: Changelog
+
+on:
+  workflow_run:
+    workflows: ["Criar Tag"] 
+    types:
+      - completed
+
+permissions:
+  contents: write
+
+jobs:
+  changelog:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout completo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Buscar todas as tags
+        run: |
+          git fetch --tags --force
+
+      - name: Instalar GitHub CLI
+        run: |
+          sudo apt update
+          sudo apt install gh -y
+
+      - name: Baixar tag da execução anterior
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          RUN_ID=$(gh run list --workflow="Criar Tag" --branch=main --limit=1 --json databaseId -q '.[0].databaseId')
+          echo "Último run-id do workflow 'Criar Tag': $RUN_ID"
+          gh run download $RUN_ID -n release-tag
+
+      - name: Ler tag da release
+        id: tag
+        run: |
+          TAG=$(cat tag.txt)
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Gerar changelog
+        run: |
+          NEW_TAG="${{ steps.tag.outputs.tag }}"
+          echo "## $NEW_TAG - $(date +'%Y-%m-%d')" > temp_changelog.md
+          LAST_TAG=$(git describe --tags --abbrev=0 ${NEW_TAG}^ 2>/dev/null || echo "")
+
+          echo "Última tag: $LAST_TAG"
+          echo "Nova tag: $NEW_TAG"
+
+          if [ -z "$LAST_TAG" ]; then
+            git log --pretty=format:"- %s" | sed -E '/^- (Merge pull request|docs: changelog atualizado)/d' | sed -E 's/\[(skip ci|ci skip)\]//gi' >> temp_changelog.md
+          else
+            git log $LAST_TAG..$NEW_TAG --pretty=format:"- %s" | sed -E '/^- (Merge pull request|docs: changelog atualizado)/d' | sed -E 's/\[(skip ci|ci skip)\]//gi' >> temp_changelog.md
+          fi
+
+          echo "" >> temp_changelog.md
+
+          if [ -f CHANGELOG.md ]; then
+            if grep -q "^## $NEW_TAG - " CHANGELOG.md; then
+              echo "A tag $NEW_TAG já existe no changelog. Pulando geração."
+              rm temp_changelog.md
+              exit 0
+            else
+              cat CHANGELOG.md >> temp_changelog.md
+            fi
+          fi
+
+          mv temp_changelog.md CHANGELOG.md
+          cat CHANGELOG.md
+
+      - name: Commitar e pushar changelog
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add CHANGELOG.md
+          git commit -m "docs: changelog atualizado [skip ci]" || echo "Nada para commitar"
+          git push origin HEAD:${{ github.event.workflow_run.head_branch }}
+
+      - name: Re‑upload tag como artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-tag
+          path: tag.txt

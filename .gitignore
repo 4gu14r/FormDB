@@ -1,0 +1,17 @@
+# --- Build and Compilation Artifacts ---
+bin/
+obj/
+*.o
+
+# --- Application Data and Exports ---
+data/
+exports/
+
+# --- Scripts ---
+build.sh
+
+# --- Tools ---
+tools/
+
+# --- Editor and IDE Configuration ---
+.vscode/
