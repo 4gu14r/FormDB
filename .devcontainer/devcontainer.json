@@ -1,23 +1,31 @@
 {
-    "name": "C Development Container",
-    "image": "gcc:latest",
-    "customizations": {
-        "vscode": {
-            "extensions": [
-                "ms-vscode.cpptools",
-                "ms-vscode.cmake-tools",
-                "ms-vscode.cpptools-extension-pack",
-                "ms-vscode.cpptools-themes",
-                "ms-vscode.makefile-tools",
-                "DavidAnson.vscode-markdownlint",
-                "google.geminicodeassist",
-                "mechatroner.rainbow-csv"
-            ],
-            "settings": {
-                "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
-                "C_Cpp.default.intelliSenseMode": "gcc-x64"
-            }
-        }
-    },
-    "postCreateCommand": "apt-get update && apt-get install -y make"
+  "name": "C Development Container",
+  "image": "mcr.microsoft.com/devcontainers/cpp:ubuntu",
+
+  "remoteUser": "vscode",
+  "updateRemoteUserUID": true,
+  
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {}
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.cpptools",
+        "ms-vscode.cmake-tools",
+        "ms-vscode.makefile-tools",
+        "ms-vscode.cpptools-extension-pack",
+        "ms-vscode.cpptools-themes",
+        "ms-vscode.makefile-tools",
+        "DavidAnson.vscode-markdownlint",
+        "mechatroner.rainbow-csv",
+        "google.geminicodeassist"
+      ],
+      "settings": {
+        "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+        "C_Cpp.default.intelliSenseMode": "gcc-x64"
+      }
+    }
+  }
 }
