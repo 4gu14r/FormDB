@@ -4,7 +4,7 @@
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Language](https://img.shields.io/badge/language-C-orange.svg)
-![Status](https://img.shields.io/badge/status-Em%20Desenvolvimento-yellow.svg)
+![Status](https://img.shields.io/badge/status-Disponível-brightgreen.svg)
 
 ---
 
@@ -19,87 +19,40 @@ FormDB é um sistema **offline** e **gratuito** que permite criar formulários p
 - 📝 **Crie formulários customizados** sem programar
 - 🎨 **18 tipos de campos** diferentes (texto, número, data, email, CPF, etc)
 - ✅ **Validações automáticas** (CPF válido, email válido, etc)
-- 📤 **Exporte em múltiplos formatos** (CSV, JSON, Excel, PDF)
+- 📤 **Exporte seus dados** para CSV e JSON
 - 📥 **Importe dados** de planilhas existentes
 - 🔍 **Busca ultra-rápida** com filtros avançados
-- 📊 **Relatórios e estatísticas** automáticos
 - 💾 **Backup automático** dos seus dados
 - 🚀 **Rápido e leve** (feito em C!)
 - 🔒 **Privacidade total** (offline, seus dados não vão pra nuvem)
 
 ---
 
-## 🚀 Instalação Rápida
+## 🚀 Como Começar
 
-### Requisitos
-- GCC (compilador C)
-- Make
-- Linux, macOS ou Windows (com MinGW)
+### Baixando a Versão Pronta (Recomendado)
 
-### Compilar e Executar
+Você pode baixar a versão mais recente do FormDB para seu sistema operacional diretamente da nossa página de **Releases**. Não precisa instalar nada, é só baixar e usar!
 
-```bash
-# Clone ou baixe o projeto
-cd formdb
+➡️ **[Acessar Releases para Baixar](https://github.com/form-db/FormDB/releases)**
 
-# Compile
-make
+### Para Desenvolvedores (Compilando do Zero)
 
-# Execute
-make run
-```
+Se você é um desenvolvedor e deseja compilar o projeto, siga nosso guia de início rápido.
 
-Pronto! 🎉
+➡️ **[Consultar o Guia de Início Rápido](./docs/QUICKSTART.md)**
 
 ---
 
-## 📖 Como Usar?
+## 📖 Visão Geral do Uso
 
-### 1️⃣ Criar um Formulário
+O fluxo é simples:
 
-```
-Menu → 1. Criar Novo Formulário
+1.  **Crie um Formulário:** Vá em `Menu → Criar Novo Formulário`, defina um nome e adicione os campos que precisar (como "Nome do Cliente", "Valor do Pedido", "Data de Entrega", etc).
+2.  **Cadastre seus Dados:** Selecione o formulário criado e preencha as informações. A interface é limpa e os campos já possuem validação.
+3.  **Explore e Exporte:** Use a busca para encontrar registros ou exporte seus dados para CSV e JSON com poucos cliques.
 
-Digite:
-- Nome: "produtos"
-- Nome exibido: "Cadastro de Produtos"
-
-Adicione campos:
-1. Código (Texto Curto)
-2. Nome (Texto Curto)
-3. Preço (Dinheiro)
-4. Estoque (Número)
-5. Categoria (Lista única)
-6. Ativo (Sim/Não)
-
-Salvar! ✓
-```
-
-### 2️⃣ Cadastrar Dados
-
-```
-Menu → 3. Cadastrar Dados
-
-Código:     [P001]
-Nome:       [Camisa Polo]
-Preço:      [R$ 89,90]
-Estoque:    [150]
-Categoria:  [▼ Roupas]
-Ativo:      (●) Sim
-
-Salvar! ✓
-```
-
-### 3️⃣ Exportar
-
-```
-Menu → 6. Exportar Dados
-
-Escolha formato: CSV
-Local: exports/produtos.csv
-
-✓ 1.247 registros exportados!
-```
+Para mais detalhes e exemplos, consulte nosso **[Guia de Exemplos](./docs/EXAMPLES.md)**.
 
 ---
 
@@ -160,40 +113,6 @@ Local: exports/produtos.csv
 
 ---
 
-## 📁 Estrutura de Arquivos
-
-```
-formdb/
-├── bin/              # Executável compilado
-├── src/              # Código fonte
-│   ├── core/        # Motor principal
-│   ├── ui/          # Interface
-│   ├── storage/     # Persistência
-│   └── utils/       # Utilitários
-├── data/            # Seus dados
-│   ├── forms/       # Formulários criados
-│   └── records/     # Registros cadastrados
-├── templates/       # Templates prontos
-├── exports/         # Arquivos exportados
-├── backups/         # Backups automáticos
-└── makefile         # Build system
-```
-
----
-
-## 🛠️ Comandos Make
-
-```bash
-make          # Compila o projeto
-make run      # Compila e executa
-make clean    # Remove arquivos compilados
-make cleanall # Remove tudo (incluindo dados!)
-make info     # Informações do projeto
-make help     # Lista de comandos
-```
-
----
-
 ## 🔥 Diferenciais
 
 | Característica | FormDB | Airtable | Google Forms |
@@ -207,82 +126,20 @@ make help     # Lista de comandos
 
 ---
 
-## 📊 Roadmap
-
-### ✅ Fase 1 - Core (Atual)
-- [x] Criar formulários customizados
-- [x] 18 tipos de campos
-- [x] Validações básicas
-- [ ] Entrada de dados dinâmica
-- [ ] Salvamento CSV
-
-### 🚧 Fase 2 - Storage
-- [ ] Exportar JSON
-- [ ] Importar CSV/JSON
-- [ ] Formato binário (performance)
-- [ ] Backup automático
-
-### 📅 Fase 3 - Features
-- [ ] Sistema de busca avançado
-- [ ] Filtros múltiplos
-- [ ] Ordenação dinâmica
-- [ ] Relacionamentos entre formulários
-- [ ] Campos calculados
-
-### 🎨 Fase 4 - Reports
-- [ ] Relatórios customizáveis
-- [ ] Estatísticas automáticas
-- [ ] Gráficos ASCII
-- [ ] Exportar PDF
-
-### 🚀 Fase 5 - Avançado
-- [ ] Templates prontos (produtos, clientes, etc)
-- [ ] Sistema de login (opcional)
-- [ ] Auditoria (quem fez o quê)
-- [ ] API REST (opcional)
-
----
-
 ## 🤝 Contribuindo
 
-Contribuições são bem-vindas! Sinta-se à vontade para:
+Contribuições são muito bem-vindas! Sinta-se à vontade para:
 
 1. 🐛 Reportar bugs
 2. 💡 Sugerir funcionalidades
 3. 🔧 Enviar pull requests
-4. 📖 Melhorar documentação
+4. 📖 Melhorar a documentação
 
 ---
 
 ## 📝 Licença
 
-MIT License - Você pode usar, modificar e distribuir livremente!
-
----
-
-## 💬 Contato
-
-Dúvidas ou sugestões? Abra uma issue no GitHub!
-
----
-
-## 🌟 Por Que FormDB?
-
-> "Cansado de sistemas caros, lentos e que mandam seus dados pra nuvem sem permissão? O FormDB é a solução: rápido, seguro, gratuito e SEU!"
-
-### Comparação Rápida
-
-**Antes (Excel/Planilhas):**
-- ❌ Difícil de validar dados
-- ❌ Erros de digitação
-- ❌ Sem relacionamentos
-- ❌ Dificuldade pra gerar relatórios
-
-**Depois (FormDB):**
-- ✅ Validações automáticas
-- ✅ Interface guiada
-- ✅ Relacionamentos entre dados
-- ✅ Relatórios com 1 clique
+Distribuído sob a MIT License. Veja `LICENSE.md` para mais informações.
 
 ---
 

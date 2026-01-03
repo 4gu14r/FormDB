@@ -289,18 +289,18 @@ Campos:
 
 ## 🎯 Dicas de Uso
 
-### Relacionamentos entre Formulários
+### Dica: Simulando Relacionamentos
 
-Você pode criar formulários relacionados! Exemplo:
+Atualmente, o FormDB não possui um sistema de relacionamentos automáticos (vincular um registro a outro). No entanto, você pode simular esse comportamento manualmente.
 
-**Clientes** → **Pedidos** → **Itens do Pedido**
+**Exemplo: Clientes e Pedidos**
 
-No formulário "Pedidos", adicione um campo:
-```
-nome_cliente (Texto Curto) - Digite o nome exato do cliente
-```
+1.  Você tem um formulário `clientes`.
+2.  Crie um formulário `pedidos`.
+3.  No formulário `pedidos`, adicione um campo de texto chamado `id_cliente` ou `cpf_cliente`.
+4.  Ao cadastrar um novo pedido, preencha este campo manualmente com o identificador único do cliente correspondente.
 
-Depois faça a busca manual ou use o ID!
+Você poderá então usar a função de busca para encontrar todos os pedidos de um mesmo cliente.
 
 ### Campos Calculados (Futuro)
 
