@@ -1,3 +1,6 @@
+## v0.0.0 - 2026-01-03
+- chore: Update docs system
+- chore: initial project setup
 ## v0.1.0 - 2026-01-03
 - Delete CHANGELOG.md
 - fix: test!
